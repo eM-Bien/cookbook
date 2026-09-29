@@ -1,36 +1,132 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Książka kucharska
 
-## Getting Started
+Przepisy, plan posiłków na każdy dzień i wspólna lista zakupów dla dwóch osób.
 
-First, run the development server:
+- **Przepisy** — dodawane ręcznie albo wczytywane z linku; serduszko oznacza ulubione.
+  Podzielone na śniadania, obiady i kolacje, z dodatkowymi rodzajami (owsianki, wege…).
+- **Kalorie** — na porcję przy przepisie i w sumie na każdy dzień w kalendarzu.
+- **Porcje** — zmiana liczby porcji przelicza ilości składników, także miary domowe
+  („4 łyżki (40 g)”).
+- **Kalendarz** — przepisy przypisane do dni i posiłków, każdy z własną liczbą porcji.
+- **Lista zakupów** — sumuje składniki z wybranych dni; odhaczasz to, co już masz.
+- **Komentarze** — pod każdym przepisem, podpisane autorem.
+
+Zmiany jednej osoby pojawiają się u drugiej od razu, bez odświeżania strony.
+
+## Uruchomienie po raz pierwszy
+
+Potrzebne: [Node.js](https://nodejs.org) w wersji 22 lub nowszej i darmowe konto na
+[supabase.com](https://supabase.com).
+
+### 1. Baza danych
+
+1. W Supabase utwórz nowy projekt (region np. Frankfurt).
+2. Otwórz **SQL Editor**, wklej całą zawartość pliku `supabase/schema.sql` i kliknij **Run**.
+3. W tym samym edytorze dopisz adresy e-mail obu osób:
+
+   ```sql
+   insert into public.allowed_emails (email) values
+     ('pierwsza.osoba@example.com'),
+     ('druga.osoba@example.com');
+   ```
+
+   Tylko osoby z tej listy mogą wejść do aplikacji. Kont nie trzeba zakładać — powstają
+   same przy pierwszym logowaniu.
+
+4. Wyłącz samodzielną rejestrację, żeby nikt nie założył konta z pominięciem aplikacji:
+   **Authentication → Sign In / Providers → Allow new users to sign up** → wyłącz.
+
+### 2. Połączenie aplikacji z bazą
+
+1. Skopiuj plik `.env.example` jako `.env.local`.
+2. W Supabase otwórz **Project Settings → API Keys** i przepisz do `.env.local`:
+
+   | Zmienna | Wartość |
+   | --- | --- |
+   | `NEXT_PUBLIC_SUPABASE_URL` | adres projektu, `https://….supabase.co` |
+   | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | klucz *publishable* |
+   | `SUPABASE_SECRET_KEY` | klucz *secret* |
+
+   Klucz *secret* daje pełny dostęp do bazy. Jego zmienna nie może mieć przedrostka
+   `NEXT_PUBLIC_` — z nim trafiłby do przeglądarki.
+
+### 3. Start
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Aplikacja działa pod adresem, który wypisze terminal (zwykle http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Udostępnienie w internecie
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Żeby korzystać z telefonu i z dwóch domów, aplikację trzeba opublikować, np. na
+[Vercel](https://vercel.com) (darmowy plan wystarczy):
 
-## Learn More
+1. Wyślij repozytorium na GitHub.
+2. W Vercel wybierz **Add New → Project** i wskaż repozytorium.
+3. W ustawieniach projektu dodaj te same trzy zmienne, co w `.env.local`.
 
-To learn more about Next.js, take a look at the following resources:
+## Jak to jest zbudowane
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Miejsce | Co tam jest |
+| --- | --- |
+| `app/(app)/` | Strony dostępne po zalogowaniu: kalendarz, przepisy, zakupy, profil |
+| `app/(app)/@drawer/` | Przepis otwierany w wysuwanym panelu nad bieżącą stroną |
+| `app/login/` | Logowanie samym adresem e-mail |
+| `components/` | Elementy wspólne dla kilku stron |
+| `lib/ingredients.ts`, `lib/units.ts` | Rozpoznawanie składników („2 łyżki masła”), jednostki, przeliczanie porcji |
+| `lib/shopping.ts` | Sumowanie składników na listę zakupów |
+| `scripts/import-notion.ts` | Import przepisów i planu tygodnia z eksportu Notion |
+| `lib/recipe-import.ts`, `lib/fetch-page.ts` | Wczytywanie przepisu z linku |
+| `supabase/schema.sql` | Tabele i reguły dostępu |
+| `proxy.ts` | Odsyła niezalogowanych na stronę logowania |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Logowanie
 
-## Deploy on Vercel
+Do wejścia wystarczy adres e-mail z listy `allowed_emails`. Przy pierwszym logowaniu aplikacja
+pyta jeszcze o nazwę, którą podpisuje komentarze. Nie ma haseł ani wiadomości z potwierdzeniem.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+To świadomy wybór wygody ponad bezpieczeństwo: **każdy, kto zna adres z listy, może się
+zalogować** i zmieniać lub usuwać dane. Po opublikowaniu aplikacji w internecie warto nie
+podawać nikomu jej adresu.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Kolejną osobę dodaje się jednym poleceniem w SQL Editorze:
+
+```sql
+insert into public.allowed_emails (email) values ('nowa.osoba@example.com');
+```
+
+## Import z Notion
+
+Przepisy z eksportu Notion (format **Markdown & CSV**, z włączonym **Include subpages**)
+wczytuje skrypt:
+
+```bash
+npx tsx scripts/import-notion.ts "ścieżka/do/eksportu"                  # tylko podgląd
+npx tsx scripts/import-notion.ts "ścieżka/do/eksportu" --save --plan    # zapis do bazy
+```
+
+| Opcja | Działanie |
+| --- | --- |
+| `--save` | Zapisuje do bazy; bez niej skrypt tylko pokazuje, co rozpoznał |
+| `--plan` | Przenosi też zaplanowane posiłki do kalendarza |
+| `--update` | Nadpisuje przepisy, które już są w bazie (rozpoznaje je po nazwie) |
+
+Skrypt można uruchamiać wielokrotnie — istniejących przepisów nie dubluje.
+
+## Po aktualizacji aplikacji
+
+Gdy zmienia się plik `supabase/schema.sql`, trzeba go ponownie uruchomić w **SQL Editorze**
+Supabase. Skrypt dodaje tylko to, czego brakuje, i nie usuwa danych.
+
+## Dobrze wiedzieć
+
+- **Nazwy składników** są sumowane wtedy, gdy są zapisane tak samo. „mąka” i „mąki” to dla
+  listy zakupów dwie osobne pozycje — warto trzymać się jednej formy.
+- **Wczytywanie z linku** zawsze wymaga sprawdzenia: część stron podaje składniki bez ilości,
+  a niektóre blokują automatyczne pobieranie. Wtedy najszybciej skopiować listę składników
+  i użyć przycisku „Wklej kilka naraz”.
+- **Nowa lista zakupów** zastępuje poprzednią. „Odśwież z kalendarza” przelicza ilości,
+  ale zachowuje odhaczenia i pozycje dopisane ręcznie.
