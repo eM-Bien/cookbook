@@ -11,6 +11,8 @@ import {
   formatDayMonth,
   formatMonthYear,
   formatRange,
+  formatRangeShort,
+  formatShort,
   formatWeekday,
   isISODate,
   monthGrid,
@@ -27,16 +29,16 @@ import { VIEW_COOKIE, isView, type CalendarView } from "./views";
 export const metadata: Metadata = { title: "Kalendarz" };
 
 /** What each view shows, and how far one step forward or back takes you. */
-function describe(view: CalendarView, date: string, now: string) {
+function describe(view: CalendarView, date: string) {
   if (view === "dzien") {
     return {
       days: [date],
       from: date,
       to: date,
       title: `${formatWeekday(date)}, ${formatDayMonth(date)}`,
+      shortTitle: `${formatWeekday(date)}, ${formatShort(date)}`,
       previous: addDays(date, -1),
       next: addDays(date, 1),
-      isCurrent: date === now,
       names: { previous: "Poprzedni dzień", next: "Następny dzień", shopping: "ten dzień" },
     };
   }
@@ -46,9 +48,9 @@ function describe(view: CalendarView, date: string, now: string) {
       from: startOfMonth(date),
       to: endOfMonth(date),
       title: formatMonthYear(date),
+      shortTitle: formatMonthYear(date),
       previous: addMonths(date, -1),
       next: addMonths(date, 1),
-      isCurrent: date.slice(0, 7) === now.slice(0, 7),
       names: { previous: "Poprzedni miesiąc", next: "Następny miesiąc", shopping: "ten miesiąc" },
     };
   }
@@ -58,9 +60,9 @@ function describe(view: CalendarView, date: string, now: string) {
     from: monday,
     to: addDays(monday, 6),
     title: formatRange(monday, addDays(monday, 6)),
+    shortTitle: formatRangeShort(monday, addDays(monday, 6)),
     previous: addDays(date, -7),
     next: addDays(date, 7),
-    isCurrent: monday === startOfWeek(now),
     names: { previous: "Poprzedni tydzień", next: "Następny tydzień", shopping: "ten tydzień" },
   };
 }
@@ -81,7 +83,7 @@ export default async function CalendarPage({ searchParams }: PageProps<"/kalenda
         : "tydzien";
   const date = isISODate(params.data) ? params.data : isISODate(params.tydzien) ? params.tydzien : now;
 
-  const shown = describe(view, date, now);
+  const shown = describe(view, date);
   const href = (day: string) => `/kalendarz?widok=${view}&data=${day}`;
 
   const [planResult, recipesResult] = await Promise.all([
@@ -108,23 +110,27 @@ export default async function CalendarPage({ searchParams }: PageProps<"/kalenda
     <div className="stack">
       <LiveRefresh table="meal_plan" />
 
-      {/* The period is the heading; "Kalendarz" stays for screen readers. */}
-      <h1 className="calendar-heading">
-        <span className="sr-only">Kalendarz: </span>
-        <span className="calendar-title">{shown.title}</span>
-      </h1>
+      <div className="calendar-header">
+        {/* The period is the heading; "Kalendarz" stays for screen readers. */}
+        <h1 className="calendar-heading">
+          <span className="sr-only">Kalendarz: </span>
+          {/* A phone gets shorter month names, so the date stays on one line. */}
+          <span className="calendar-title when-wide">{shown.title}</span>
+          <span className="calendar-title when-narrow">{shown.shortTitle}</span>
+        </h1>
+        <Link
+          href={`/kalendarz?widok=dzien&data=${now}`}
+          className="btn btn-sm calendar-today"
+          aria-current={view === "dzien" && date === now ? "page" : undefined}
+        >
+          Plan na dziś
+        </Link>
 
-      <div className="calendar-bar">
         <ViewSwitcher view={view} date={date} />
         <div className="calendar-steps">
           <Link href={href(shown.previous)} className="round-btn" aria-label={shown.names.previous}>
             <Icon name="chevron-left" />
           </Link>
-          {!shown.isCurrent && (
-            <Link href={href(now)} className="btn btn-sm">
-              Dziś
-            </Link>
-          )}
           <Link href={href(shown.next)} className="round-btn" aria-label={shown.names.next}>
             <Icon name="chevron-right" />
           </Link>

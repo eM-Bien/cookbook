@@ -1888,38 +1888,54 @@ a.day-name:hover {
   padding-right: 28px;
 }
 
-/* Calendar header: the period in large type, then views on the left and steps on the right. */
-.calendar-heading {
-  font-size: 2.1rem;
-  margin-top: 4px;
+/*
+ * Calendar header. Left: the period in large type, the views under it.
+ * Right: the way to today, the steps back and forward under it.
+ */
+.calendar-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px 16px;
 }
 
-.calendar-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+.calendar-heading {
+  margin-top: 4px;
+  font-size: 2.1rem;
+}
+
+.calendar-today,
+.calendar-steps {
+  justify-self: end;
+}
+
+.calendar-today[aria-current="page"] {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--primary-contrast);
 }
 
 .calendar-steps {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-left: auto;
 }
 
 @media (max-width: 700px) {
+  .calendar-header {
+    gap: 8px 10px;
+  }
+
   .calendar-heading {
     font-size: 1.6rem;
   }
 
-  .calendar-bar .chips {
+  .calendar-header .chips {
     gap: 6px;
     padding-bottom: 0;
   }
 
-  .calendar-bar .chip {
+  .calendar-header .chip {
     padding: 7px 13px;
   }
 
@@ -1931,4 +1947,82 @@ a.day-name:hover {
     width: 40px;
     height: 40px;
   }
+}
+
+.when-narrow {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  .calendar-title.when-wide {
+    display: none;
+  }
+
+  .calendar-title.when-narrow {
+    display: inline-block;
+  }
+}
+
+/* ---------- Swapping a meal: a compact list of recipes ---------- */
+
+.meal-swap {
+  min-height: 28px;
+  margin-left: auto;
+  padding: 2px 10px;
+  border-color: transparent;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  font-size: 0.8rem;
+}
+
+.dialog-mini {
+  width: min(400px, calc(100vw - 24px));
+}
+
+.dialog-mini .dialog-body {
+  gap: 12px;
+  padding: 18px;
+}
+
+.pick-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: min(340px, 50dvh);
+  margin: 0 -6px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.pick {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 5px 6px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  text-align: left;
+  font-size: 0.9rem;
+  line-height: 1.25;
+  cursor: pointer;
+}
+
+.pick:hover:not(:disabled) {
+  background: var(--surface-muted);
+}
+
+.pick:disabled {
+  cursor: default;
+}
+
+.pick[aria-current="true"] {
+  background: var(--surface-muted);
+}
+
+.pick .thumb {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  font-size: 1.1rem;
 }

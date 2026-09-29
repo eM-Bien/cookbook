@@ -1,10 +1,16 @@
 export type MealType = "sniadanie" | "obiad" | "kolacja" | "przekaska";
 
-export const MEAL_TYPES: { value: MealType; label: string; plural: string }[] = [
-  { value: "sniadanie", label: "Śniadanie", plural: "Śniadania" },
-  { value: "obiad", label: "Obiad", plural: "Obiady" },
-  { value: "kolacja", label: "Kolacja", plural: "Kolacje" },
-  { value: "przekaska", label: "Przekąska", plural: "Przekąski" },
+export const MEAL_TYPES: {
+  value: MealType;
+  label: string;
+  plural: string;
+  /** The form after a verb: "dodaj kolację". */
+  object: string;
+}[] = [
+  { value: "sniadanie", label: "Śniadanie", plural: "Śniadania", object: "śniadanie" },
+  { value: "obiad", label: "Obiad", plural: "Obiady", object: "obiad" },
+  { value: "kolacja", label: "Kolacja", plural: "Kolacje", object: "kolację" },
+  { value: "przekaska", label: "Przekąska", plural: "Przekąski", object: "przekąskę" },
 ];
 
 export function isMealType(value: unknown): value is MealType {

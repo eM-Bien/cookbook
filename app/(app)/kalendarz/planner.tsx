@@ -2,6 +2,7 @@
 
 import { useOptimistic, useRef, useState, useTransition } from "react";
 import Link from "next/link";
+import { closeOnBackdrop } from "@/components/close-on-backdrop";
 import { Icon } from "@/components/icons";
 import { RecipeThumb } from "@/components/recipe-thumb";
 import { Stepper } from "@/components/stepper";
@@ -13,7 +14,7 @@ import {
 } from "@/lib/dates";
 import { MEAL_TONE, servingsLabel } from "@/lib/look";
 import { MEAL_TYPES, type MealPlanEntry, type MealType } from "@/lib/types";
-import { addMeal, removeMeal, setMealServings } from "./actions";
+import { addMeal, removeMeal, replaceMeal, setMealServings } from "./actions";
 import type { CalendarView } from "./views";
 
 export type RecipeOption = {
@@ -28,10 +29,25 @@ export type RecipeOption = {
 
 type Change =
   | { type: "servings"; id: string; servings: number }
-  | { type: "remove"; id: string };
+  | { type: "remove"; id: string }
+  | { type: "replace"; id: string; recipe: RecipeOption };
+
+/** What the compact list is choosing for: a meal to swap, or an empty slot to fill. */
+type Picking = { date: string; meal: MealType; entry: MealPlanEntry | null };
+
+function applyTo(entries: MealPlanEntry[], change: Change): MealPlanEntry[] {
+  if (change.type === "remove") return entries.filter((entry) => entry.id !== change.id);
+  return entries.map((entry) => {
+    if (entry.id !== change.id) return entry;
+    if (change.type === "servings") return { ...entry, servings: change.servings };
+    const { id, title, servings, calories, image_url, tags } = change.recipe;
+    return { ...entry, recipe: { id, title, servings, calories, image_url, tags } };
+  });
+}
 
 const MEAL_ORDER = MEAL_TYPES.map((meal) => meal.value);
 const MEAL_LABEL = Object.fromEntries(MEAL_TYPES.map((meal) => [meal.value, meal.label]));
+const MEAL_OBJECT = Object.fromEntries(MEAL_TYPES.map((meal) => [meal.value, meal.object]));
 
 /** "1549 kcal", or "ponad 1085 kcal" when some meals have no calories given. */
 function caloriesOf(meals: MealPlanEntry[]): string | null {
@@ -60,13 +76,7 @@ export function Planner({
   entries: MealPlanEntry[];
   recipes: RecipeOption[];
 }) {
-  const [shown, applyChange] = useOptimistic(entries, (current, change: Change) =>
-    change.type === "remove"
-      ? current.filter((entry) => entry.id !== change.id)
-      : current.map((entry) =>
-          entry.id === change.id ? { ...entry, servings: change.servings } : entry,
-        ),
-  );
+  const [shown, applyChange] = useOptimistic(entries, applyTo);
   const [error, setError] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
@@ -79,6 +89,11 @@ export function Planner({
   const [dialogError, setDialogError] = useState<string | null>(null);
   const [adding, startAdding] = useTransition();
 
+  const picker = useRef<HTMLDialogElement>(null);
+  const [picking, setPicking] = useState<Picking | null>(null);
+  const [pickerSearch, setPickerSearch] = useState("");
+  const [pickerError, setPickerError] = useState<string | null>(null);
+
   function change(update: Change) {
     setError(null);
     startTransition(async () => {
@@ -86,18 +101,46 @@ export function Planner({
       const result =
         update.type === "remove"
           ? await removeMeal(update.id)
-          : await setMealServings(update.id, update.servings);
+          : update.type === "replace"
+            ? await replaceMeal(update.id, update.recipe.id)
+            : await setMealServings(update.id, update.servings);
       if (!result.ok) setError(result.error);
     });
   }
 
-  function openDialog(forDay: string, forMeal?: MealType) {
+  function openDialog(forDay: string) {
     setDay(forDay);
-    if (forMeal) setMealType(forMeal);
     setSearch("");
     setRecipeId(null);
     setDialogError(null);
     dialog.current?.showModal();
+  }
+
+  function openPicker(target: Picking) {
+    setPicking(target);
+    setPickerSearch("");
+    setPickerError(null);
+    picker.current?.showModal();
+  }
+
+  function pick(recipe: RecipeOption) {
+    if (!picking) return;
+    if (picking.entry) {
+      change({ type: "replace", id: picking.entry.id, recipe });
+      picker.current?.close();
+      return;
+    }
+    setPickerError(null);
+    startAdding(async () => {
+      const result = await addMeal({
+        date: picking.date,
+        mealType: picking.meal,
+        recipeId: recipe.id,
+        servings: recipe.servings,
+      });
+      if (result.ok) picker.current?.close();
+      else setPickerError(result.error);
+    });
   }
 
   function chooseRecipe(recipe: RecipeOption) {
@@ -162,10 +205,29 @@ export function Planner({
               label={`Porcje: ${entry.recipe.title}`}
             />
             <span>{servingsLabel(entry.servings)}</span>
+            {withPhoto && (
+              <button
+                type="button"
+                className="btn btn-sm meal-swap"
+                aria-label={`Zamień ${entry.recipe.title}`}
+                onClick={() =>
+                  openPicker({ date: entry.plan_date, meal: entry.meal_type, entry })
+                }
+              >
+                <Icon name="refresh" size={15} /> Zamień
+              </button>
+            )}
           </div>
         </div>
       </div>
     </div>
+  );
+
+  const pickerNeedle = pickerSearch.trim().toLowerCase();
+  const pickable = recipes.filter((recipe) =>
+    pickerNeedle
+      ? recipe.title.toLowerCase().includes(pickerNeedle)
+      : picking && (recipe.meal_types.length === 0 || recipe.meal_types.includes(picking.meal)),
   );
 
   // Without a search the list offers what suits the chosen meal; searching looks everywhere.
@@ -232,14 +294,15 @@ export function Planner({
                     <h2 className="slot-title">{slot.label}</h2>
                     <div className="slot-meals">
                       {inSlot.map((entry) => mealCard(entry, true))}
-                      <button
-                        type="button"
-                        className="btn btn-sm day-add"
-                        onClick={() => openDialog(date, slot.value)}
-                      >
-                        <Icon name="plus" size={16} />
-                        {inSlot.length === 0 ? `Dodaj ${slot.label.toLowerCase()}` : "Dodaj kolejne"}
-                      </button>
+                      {inSlot.length === 0 && (
+                        <button
+                          type="button"
+                          className="btn btn-sm day-add"
+                          onClick={() => openPicker({ date, meal: slot.value, entry: null })}
+                        >
+                          <Icon name="plus" size={16} /> Dodaj {slot.object}
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
@@ -313,7 +376,94 @@ export function Planner({
         </div>
       )}
 
-      <dialog ref={dialog} aria-labelledby="add-meal-title">
+      <dialog
+        ref={picker}
+        className="dialog-mini"
+        aria-labelledby="picker-title"
+        onClick={closeOnBackdrop}
+      >
+        <div className="dialog-body">
+          <div className="dialog-head">
+            <div>
+              <h2 id="picker-title">
+                {picking?.entry ? "Zamień" : "Dodaj"}{" "}
+                {picking && MEAL_OBJECT[picking.meal]}
+              </h2>
+              {picking?.entry && <p className="muted small">Teraz: {picking.entry.recipe.title}</p>}
+            </div>
+            <button
+              type="button"
+              className="icon-btn"
+              aria-label="Zamknij"
+              onClick={() => picker.current?.close()}
+            >
+              <Icon name="close" />
+            </button>
+          </div>
+
+          <div className="search">
+            <Icon name="search" />
+            <input
+              className="input"
+              style={{ background: "var(--surface-muted)" }}
+              type="search"
+              value={pickerSearch}
+              onChange={(event) => setPickerSearch(event.target.value)}
+              placeholder="Szukaj we wszystkich przepisach…"
+              aria-label="Szukaj przepisu"
+            />
+          </div>
+
+          <ul className="pick-list" aria-label="Przepisy do wyboru">
+            {pickable.map((recipe) => {
+              const current = picking?.entry?.recipe.id === recipe.id;
+              return (
+                <li key={recipe.id}>
+                  <button
+                    type="button"
+                    className="pick"
+                    disabled={current || adding}
+                    aria-current={current ? "true" : undefined}
+                    onClick={() => pick(recipe)}
+                  >
+                    <RecipeThumb
+                      title={recipe.title}
+                      imageUrl={recipe.image_url}
+                      tags={recipe.tags}
+                      small
+                    />
+                    <span className="option-text">
+                      <span>{recipe.title}</span>
+                      <span className="muted small">
+                        {current
+                          ? "wybrane teraz"
+                          : recipe.calories !== null
+                            ? `${recipe.calories} kcal`
+                            : ""}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+            {pickable.length === 0 && (
+              <li className="muted small">
+                {pickerNeedle
+                  ? "Brak pasujących przepisów."
+                  : "Żaden przepis nie jest oznaczony na ten posiłek. Wyszukaj po nazwie."}
+              </li>
+            )}
+          </ul>
+
+          {pickerError && (
+            <p className="message message-error" role="alert">
+              {pickerError}
+            </p>
+          )}
+        </div>
+      </dialog>
+
+      <dialog ref={dialog} aria-labelledby="add-meal-title" onClick={closeOnBackdrop}>
         <form
           className="dialog-body"
           onSubmit={(event) => {

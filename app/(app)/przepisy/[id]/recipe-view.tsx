@@ -3,6 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { addMeal } from "@/app/(app)/kalendarz/actions";
+import { closeOnBackdrop } from "@/components/close-on-backdrop";
 import { Icon } from "@/components/icons";
 import { Stepper } from "@/components/stepper";
 import { formatDayMonth, formatWeekday } from "@/lib/dates";
@@ -144,7 +145,7 @@ export function RecipeView({
         )}
       </div>
 
-      <dialog ref={dialog} aria-labelledby="plan-title">
+      <dialog ref={dialog} aria-labelledby="plan-title" onClick={closeOnBackdrop}>
         <form
           className="dialog-body"
           onSubmit={(event) => {

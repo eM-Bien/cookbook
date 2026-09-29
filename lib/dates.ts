@@ -63,6 +63,14 @@ export function formatShort(iso: string): string {
   return format(iso, { day: "numeric", month: "short" });
 }
 
+/** "28 wrz – 4 paź": the range in a form that fits a phone heading. */
+export function formatRangeShort(from: string, to: string): string {
+  if (from === to) return formatShort(from);
+  const sameMonth = from.slice(0, 7) === to.slice(0, 7);
+  const start = sameMonth ? format(from, { day: "numeric" }) : formatShort(from);
+  return `${start} – ${formatShort(to)}`;
+}
+
 export function formatRange(from: string, to: string): string {
   if (from === to) return formatDayMonth(from);
   const sameMonth = from.slice(0, 7) === to.slice(0, 7);

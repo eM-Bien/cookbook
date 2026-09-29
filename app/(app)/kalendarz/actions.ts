@@ -59,3 +59,16 @@ export async function removeMeal(id: string): Promise<ActionResult> {
   revalidatePath("/kalendarz");
   return { ok: true, data: null };
 }
+
+/** Swaps the recipe of a planned meal; the day, the meal and the servings stay. */
+export async function replaceMeal(id: string, recipeId: string): Promise<ActionResult> {
+  const { supabase } = await requireUser();
+  if (!isUuid(id)) return { ok: false, error: "Nie znaleziono tej pozycji." };
+  if (!isUuid(recipeId)) return { ok: false, error: "Wybierz przepis." };
+
+  const { error } = await supabase.from("meal_plan").update({ recipe_id: recipeId }).eq("id", id);
+  if (error) return { ok: false, error: describeError(error) };
+
+  revalidatePath("/kalendarz");
+  return { ok: true, data: null };
+}
