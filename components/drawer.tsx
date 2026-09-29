@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 const CLOSE_MS = 200;
 
 /**
- * A panel over the current page: slides in from the left on wide screens and
+ * A panel over the current page: slides in from the right on wide screens and
  * from the bottom on phones. Closing it goes back to the page underneath.
  */
 export function Drawer({ label, children }: { label: string; children: React.ReactNode }) {

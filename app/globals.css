@@ -1419,7 +1419,7 @@ dialog::backdrop {
 
 .drawer {
   position: fixed;
-  inset: 0 auto 0 0;
+  inset: 0 0 0 auto;
   margin: 0;
   padding: 0;
   width: min(620px, 100vw);
@@ -1427,13 +1427,13 @@ dialog::backdrop {
   height: 100dvh;
   max-height: none;
   overflow: hidden;
-  border-radius: 0 28px 28px 0;
+  border-radius: 28px 0 0 28px;
   background: var(--background);
-  animation: drawer-from-left 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: drawer-from-right 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .drawer.is-closing {
-  animation: drawer-to-left 0.2s ease-in forwards;
+  animation: drawer-to-right 0.2s ease-in forwards;
 }
 
 .drawer::backdrop {
@@ -1530,15 +1530,15 @@ body:has(.drawer[open]) {
   }
 }
 
-@keyframes drawer-from-left {
+@keyframes drawer-from-right {
   from {
-    transform: translateX(-100%);
+    transform: translateX(100%);
   }
 }
 
-@keyframes drawer-to-left {
+@keyframes drawer-to-right {
   to {
-    transform: translateX(-100%);
+    transform: translateX(100%);
   }
 }
 
