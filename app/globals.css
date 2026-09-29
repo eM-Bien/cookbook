@@ -1623,3 +1623,13 @@ body:has(.drawer[open]) {
     transform: rotate(360deg);
   }
 }
+
+/* Dishes photographed on white are shown whole, on a white ground they blend into. */
+.hero:has(img.is-cutout) {
+  background: #ffffff;
+}
+
+.hero img.is-cutout {
+  padding: 12px 0 36px;
+  object-fit: contain;
+}

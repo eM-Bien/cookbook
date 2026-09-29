@@ -6,7 +6,7 @@ import { LiveRefresh } from "@/components/live-refresh";
 import { RecipePhotoButton } from "@/components/photo-picker";
 import { requireUser } from "@/lib/auth";
 import { today } from "@/lib/dates";
-import { dishEmoji, toneFor } from "@/lib/look";
+import { dishEmoji, isCutout, toneFor } from "@/lib/look";
 import { MEAL_TYPES, type Ingredient, type Recipe, type RecipeComment } from "@/lib/types";
 import { Comments } from "./comments";
 import { DeleteRecipeButton } from "./delete-recipe-button";
@@ -70,7 +70,12 @@ export async function RecipeContent({ id, inDrawer = false }: { id: string; inDr
       <div className="hero" data-tone={toneFor(recipe.title)}>
         {recipe.image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={recipe.image_url} alt="" referrerPolicy="no-referrer" />
+          <img
+            src={recipe.image_url}
+            alt=""
+            referrerPolicy="no-referrer"
+            className={isCutout(recipe.image_url) ? "is-cutout" : undefined}
+          />
         ) : (
           <div className="hero-placeholder" aria-hidden="true">
             {dishEmoji(recipe.tags)}

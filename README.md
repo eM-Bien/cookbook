@@ -81,6 +81,7 @@ Aplikacja działa pod adresem, który wypisze terminal (zwykle http://localhost:
 | `lib/ingredients.ts`, `lib/units.ts` | Rozpoznawanie składników („2 łyżki masła”), jednostki, przeliczanie porcji |
 | `lib/shopping.ts` | Sumowanie składników na listę zakupów |
 | `scripts/import-notion.ts` | Import przepisów i planu tygodnia z eksportu Notion |
+| `scripts/attach-photos.ts` | Podpinanie zdjęć do przepisów po nazwie pliku |
 | `lib/recipe-import.ts`, `lib/fetch-page.ts` | Wczytywanie przepisu z linku |
 | `supabase/schema.sql` | Tabele i reguły dostępu |
 | `proxy.ts` | Odsyła niezalogowanych na stronę logowania |
@@ -117,6 +118,17 @@ npx tsx scripts/import-notion.ts "ścieżka/do/eksportu" --save --plan    # zapi
 | `--update` | Nadpisuje przepisy, które już są w bazie (rozpoznaje je po nazwie) |
 
 Skrypt można uruchamiać wielokrotnie — istniejących przepisów nie dubluje.
+
+## Zdjęcia hurtem
+
+Zdjęcia nazwane tak jak przepisy (np. `Kurczak teriyaki.png`) można podpiąć jednym poleceniem:
+
+```bash
+npx tsx scripts/attach-photos.ts "ścieżka/do/folderu"           # tylko podgląd
+npx tsx scripts/attach-photos.ts "ścieżka/do/folderu" --save    # wgranie
+```
+
+Przepisy, które mają już zdjęcie, są pomijane; `--replace` je podmienia.
 
 ## Po aktualizacji aplikacji
 

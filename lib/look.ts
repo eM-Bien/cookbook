@@ -50,6 +50,14 @@ export function dishEmoji(tags: string[] = []): string {
   return DISH_EMOJI.find(([tag]) => tags.includes(tag))?.[1] ?? "🍽️";
 }
 
+/**
+ * PNG pictures here are dishes photographed from above on a white ground. On
+ * the recipe page they are shown whole; ordinary photos fill the frame instead.
+ */
+export function isCutout(imageUrl: string | null | undefined): boolean {
+  return Boolean(imageUrl && /\.png($|\?)/i.test(imageUrl));
+}
+
 const TONES: Tone[] = ["peach", "green", "blue", "pink", "lilac", "sand"];
 
 /** A stable colour for a recipe without a photo. */
