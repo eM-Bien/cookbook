@@ -8,9 +8,9 @@
 //
 // Reads the connection details from .env.local.
 
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import path from "node:path";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { guessCategory } from "../lib/ingredients";
 import { validateRecipe } from "../lib/recipe-validation";
 import type { Ingredient, MealType, RecipeDraft } from "../lib/types";
@@ -60,7 +60,22 @@ const AMOUNTS: { pattern: RegExp; read: (m: RegExpMatchArray) => Amount }[] = [
 ];
 
 type Amount = { weight?: [string, string]; measure?: [string | undefined, string] };
-type Parsed = { draft: RecipeDraft; warnings: string[]; file: string };
+type Parsed = {
+  draft: RecipeDraft;
+  warnings: string[];
+  file: string;
+  /** A picture pasted into the Notion page, as a file next to the export. */
+  photo: string | null;
+};
+
+const PHOTO_BUCKET = "recipe-photos";
+const PHOTO_TYPES: Record<string, string> = {
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".webp": "image/webp",
+  ".gif": "image/gif",
+};
 
 function toNumber(text: string | undefined): number {
   return text === undefined ? 1 : Number(text.replace(",", "."));
@@ -111,8 +126,11 @@ function capitalize(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-export function parseRecipe(markdown: string, file: string): Parsed | null {
+export function parseRecipe(markdown: string, file: string, folder = ""): Parsed | null {
   const lines = markdown.split(/\r?\n/);
+
+  const picture = markdown.match(/!\[[^\]]*\]\((?!https?:)([^)]+)\)/)?.[1];
+  const photo = picture ? path.join(folder, decodeURIComponent(picture)) : null;
   const title = plain(lines[0]?.replace(/^#\s*/, "") ?? "");
   if (!title) return null;
 
@@ -220,6 +238,7 @@ export function parseRecipe(markdown: string, file: string): Parsed | null {
   return {
     file,
     warnings,
+    photo: photo && PHOTO_TYPES[path.extname(photo).toLowerCase()] ? photo : null,
     draft: {
       title,
       description: "",
@@ -318,6 +337,56 @@ function assignMeals(recipes: { title: string; meal_types: MealType[] }[]): Meal
   return best;
 }
 
+// --------------------------------------------------------------- photos
+
+/** Stores the pictures in the project's file storage and links them to the recipes. */
+async function uploadPhotos(
+  supabase: SupabaseClient,
+  photos: Parsed[],
+  idByTitle: Map<string, string>,
+) {
+  if (photos.length === 0) return;
+
+  const bucket = await supabase.storage.createBucket(PHOTO_BUCKET, {
+    public: true,
+    fileSizeLimit: "5MB",
+    allowedMimeTypes: Object.values(PHOTO_TYPES),
+  });
+  if (bucket.error && !/already exists/i.test(bucket.error.message)) {
+    console.error(`  ✗ zdjęcia: ${bucket.error.message}`);
+    return;
+  }
+
+  const ids = photos
+    .map(({ draft }) => idByTitle.get(draft.title.toLowerCase()))
+    .filter((id): id is string => Boolean(id));
+  const current = await supabase.from("recipes").select("id, image_url").in("id", ids);
+  if (current.error) throw new Error(current.error.message);
+  const hasPhoto = new Set(current.data.filter((row) => row.image_url).map((row) => row.id));
+
+  let uploaded = 0;
+  for (const { draft, photo } of photos) {
+    const id = idByTitle.get(draft.title.toLowerCase());
+    // A picture chosen in the app wins over the one from Notion.
+    if (!id || !photo || hasPhoto.has(id)) continue;
+
+    const extension = path.extname(photo).toLowerCase();
+    const name = `${id}${extension}`;
+    const stored = await supabase.storage
+      .from(PHOTO_BUCKET)
+      .upload(name, readFileSync(photo), { contentType: PHOTO_TYPES[extension], upsert: true });
+    if (stored.error) {
+      console.error(`  ✗ ${draft.title}: ${stored.error.message}`);
+      continue;
+    }
+    const address = supabase.storage.from(PHOTO_BUCKET).getPublicUrl(name).data.publicUrl;
+    const linked = await supabase.from("recipes").update({ image_url: address }).eq("id", id);
+    if (linked.error) console.error(`  ✗ ${draft.title}: ${linked.error.message}`);
+    else uploaded++;
+  }
+  console.log(`Dodano zdjęć: ${uploaded}`);
+}
+
 // ----------------------------------------------------------------- main
 
 function readEnv(): Record<string, string | undefined> {
@@ -348,7 +417,7 @@ async function main() {
   for (const file of findFiles(folder, (name) => name.endsWith(".md"))) {
     const markdown = readFileSync(file, "utf8");
     if (!/^(Rodzaj|Kalorie):/m.test(markdown)) continue;
-    const recipe = parseRecipe(markdown, path.basename(file));
+    const recipe = parseRecipe(markdown, path.basename(file), path.dirname(file));
     const checked = recipe && validateRecipe(recipe.draft);
     if (!recipe || !checked || !checked.ok) {
       skipped.push(`${path.basename(file)} — ${checked && !checked.ok ? checked.error : "brak nazwy"}`);
@@ -373,7 +442,9 @@ async function main() {
     console.log(`\nPominięte (${skipped.length}):`);
     for (const line of skipped) console.log(`  ${line}`);
   }
-  if (withPlan) console.log(`\nPosiłki w planie: ${plan.length}`);
+  const photos = parsed.filter((recipe) => recipe.photo && existsSync(recipe.photo));
+  console.log(`\nZdjęcia w eksporcie: ${photos.length}`);
+  if (withPlan) console.log(`Posiłki w planie: ${plan.length}`);
 
   if (!save) {
     console.log("\nTo był podgląd. Dodaj --save, żeby zapisać do bazy.");
@@ -392,7 +463,7 @@ async function main() {
     realtime: { transport: class {} as never },
   });
 
-  const existing = await supabase.from("recipes").select("id, title, meal_types, calories");
+  const existing = await supabase.from("recipes").select("id, title, image_url");
   if (existing.error) {
     console.error(
       `\nBaza nie jest gotowa: ${existing.error.message}\nUruchom najpierw supabase/schema.sql w SQL Editorze.`,
@@ -400,6 +471,9 @@ async function main() {
     process.exit(1);
   }
   const idByTitle = new Map(existing.data.map((row) => [row.title.toLowerCase(), row.id as string]));
+  const imageById = new Map(
+    existing.data.map((row) => [row.id as string, row.image_url as string | null]),
+  );
 
   let added = 0;
   let updated = 0;
@@ -411,6 +485,8 @@ async function main() {
       continue;
     }
     const { ingredients, ...recipe } = draft;
+    // The export carries no picture address; keep the one the recipe already has.
+    recipe.image_url = (id && imageById.get(id)) || "";
     const result = await supabase.rpc("save_recipe", {
       p_id: id,
       p_recipe: recipe,
@@ -425,6 +501,8 @@ async function main() {
     else added++;
   }
   console.log(`\nDodano: ${added}, zaktualizowano: ${updated}, już były: ${left}`);
+
+  await uploadPhotos(supabase, photos, idByTitle);
 
   if (!withPlan || plan.length === 0) return;
 
