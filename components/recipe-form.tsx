@@ -13,6 +13,7 @@ import {
 } from "@/lib/types";
 import { UNITS } from "@/lib/units";
 import { Icon } from "./icons";
+import { PhotoField } from "./photo-picker";
 import { Stepper } from "./stepper";
 
 type IngredientRow = {
@@ -358,17 +359,7 @@ export function RecipeForm({
           </label>
         </div>
         <div className="form-grid">
-          <label className="field">
-            <span>Adres zdjęcia (opcjonalnie)</span>
-            <input
-              className="input"
-              type="url"
-              inputMode="url"
-              value={imageUrl}
-              onChange={(event) => setImageUrl(event.target.value)}
-              placeholder="https://…"
-            />
-          </label>
+          <PhotoField value={imageUrl} onChange={setImageUrl} />
           <label className="field">
             <span>Źródło przepisu (opcjonalnie)</span>
             <input

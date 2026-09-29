@@ -1565,3 +1565,61 @@ body:has(.drawer[open]) {
     opacity: 0.55;
   }
 }
+
+/* ---------- Photos ---------- */
+
+.hero-actions-end {
+  display: flex;
+  gap: 8px;
+}
+
+.hero-message {
+  position: absolute;
+  inset: auto 16px 40px;
+  box-shadow: var(--shadow);
+}
+
+.round-btn:disabled {
+  cursor: progress;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border);
+  border-top-color: var(--foreground);
+  border-radius: 999px;
+  animation: spin 0.7s linear infinite;
+}
+
+.photo-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+
+.photo-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 96px;
+  flex: none;
+  overflow: hidden;
+  border-radius: var(--radius);
+  background: var(--surface-muted);
+  color: var(--muted);
+}
+
+.photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    // Photos are shrunk in the browser first; this leaves room for large ones.
+    serverActions: { bodySizeLimit: "4mb" },
+  },
   async redirects() {
     return [
       // The calendar is the start page.

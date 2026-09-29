@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { HeartButton } from "@/components/heart-button";
 import { Icon } from "@/components/icons";
 import { LiveRefresh } from "@/components/live-refresh";
+import { RecipePhotoButton } from "@/components/photo-picker";
 import { requireUser } from "@/lib/auth";
 import { today } from "@/lib/dates";
 import { dishEmoji, toneFor } from "@/lib/look";
@@ -85,7 +86,10 @@ export async function RecipeContent({ id, inDrawer = false }: { id: string; inDr
               <Icon name="chevron-left" size={22} />
             </Link>
           )}
-          <HeartButton recipeId={recipe.id} favorite={isFavorite} floating />
+          <div className="hero-actions-end">
+            <RecipePhotoButton recipeId={recipe.id} hasPhoto={Boolean(recipe.image_url)} />
+            <HeartButton recipeId={recipe.id} favorite={isFavorite} floating />
+          </div>
         </div>
       </div>
 
