@@ -1633,3 +1633,302 @@ body:has(.drawer[open]) {
   padding: 12px 0 36px;
   object-fit: contain;
 }
+
+/* ---------- Calendar views ---------- */
+
+/* ::first-letter needs a block of its own to work on. */
+.calendar-title {
+  display: inline-block;
+}
+
+.calendar-title::first-letter {
+  text-transform: uppercase;
+}
+
+a.day-name:hover {
+  text-decoration: underline;
+}
+
+.meal-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.meal-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+}
+
+.meal-calories {
+  opacity: 0.7;
+}
+
+/* Day view: one day, a section for each meal. */
+
+.day-single {
+  min-height: 0;
+  gap: 20px;
+  padding: 20px;
+}
+
+.day-single.day-past {
+  opacity: 1;
+}
+
+.slot-title {
+  margin-bottom: 8px;
+  font-size: 1rem;
+}
+
+.slot-meals {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+  align-items: start;
+}
+
+.slot-meals .day-add {
+  width: auto;
+  min-height: 46px;
+  margin: 0;
+  justify-self: start;
+}
+
+/* Month view: a grid of weeks. */
+
+.month {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.month-row {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.month-head {
+  padding: 0 4px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-align: center;
+  text-transform: capitalize;
+}
+
+.month-day {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 118px;
+  padding: 8px;
+  border: 2px solid transparent;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+
+.month-day.is-outside {
+  background: color-mix(in srgb, var(--surface) 45%, transparent);
+}
+
+.month-day.is-outside .month-number,
+.month-day.day-past .month-number {
+  color: var(--muted);
+}
+
+.month-day-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+}
+
+.month-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 4px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.month-number:hover {
+  background: var(--surface-muted);
+}
+
+.month-day.day-today .month-number {
+  background: var(--primary);
+  color: var(--primary-contrast);
+}
+
+.month-calories {
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+.month-add {
+  width: 24px;
+  height: 24px;
+  margin-left: auto;
+  opacity: 0;
+}
+
+.month-day:hover .month-add,
+.month-add:focus-visible {
+  opacity: 1;
+}
+
+.month-meals {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  list-style: none;
+}
+
+.month-meals li {
+  overflow: hidden;
+  border-radius: 7px;
+  font-size: 0.78rem;
+  line-height: 1.3;
+}
+
+.month-meals a {
+  display: block;
+  overflow: hidden;
+  padding: 2px 7px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.month-meals a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 1000px) {
+  .day-single {
+    padding: 16px;
+  }
+}
+
+/* On a phone a month has room for the day and one dot per meal; tapping a day opens it. */
+@media (max-width: 700px) {
+  .month,
+  .month-row {
+    gap: 4px;
+  }
+
+  .month-day {
+    align-items: center;
+    min-height: 62px;
+    padding: 6px 2px;
+  }
+
+  .month-day-head {
+    justify-content: center;
+  }
+
+  .month-number::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius-sm);
+  }
+
+  .month-calories,
+  .month-add {
+    display: none;
+  }
+
+  .month-meals {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 3px;
+  }
+
+  .month-meals li {
+    width: 8px;
+    height: 8px;
+    border: 1px solid rgb(0 0 0 / 12%);
+    border-radius: 999px;
+  }
+
+  .month-meals a {
+    display: none;
+  }
+}
+
+/* In the day view the section heading already names the meal. */
+.day-single .meal-type {
+  display: none;
+}
+
+.day-single .meal {
+  position: relative;
+}
+
+/* Only the remove button is left in the head; it sits in the corner, above the card. */
+.day-single .meal-head {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
+  min-height: 0;
+}
+
+.day-single .meal-text {
+  padding-right: 28px;
+}
+
+/* Calendar header: the period in large type, then views on the left and steps on the right. */
+.calendar-heading {
+  font-size: 2.1rem;
+  margin-top: 4px;
+}
+
+.calendar-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.calendar-steps {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+@media (max-width: 700px) {
+  .calendar-heading {
+    font-size: 1.6rem;
+  }
+
+  .calendar-bar .chips {
+    gap: 6px;
+    padding-bottom: 0;
+  }
+
+  .calendar-bar .chip {
+    padding: 7px 13px;
+  }
+
+  .calendar-steps {
+    gap: 6px;
+  }
+
+  .calendar-steps .round-btn {
+    width: 40px;
+    height: 40px;
+  }
+}

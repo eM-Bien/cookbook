@@ -93,7 +93,14 @@ export type MealPlanEntry = {
   plan_date: string;
   meal_type: MealType;
   servings: number;
-  recipe: { id: string; title: string; servings: number; calories: number | null };
+  recipe: {
+    id: string;
+    title: string;
+    servings: number;
+    calories: number | null;
+    image_url: string | null;
+    tags: string[];
+  };
 };
 
 export type ShoppingItem = {

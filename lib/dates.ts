@@ -79,3 +79,43 @@ export function formatDateTime(timestamp: string): string {
     timeZone: "Europe/Warsaw",
   }).format(new Date(timestamp));
 }
+
+export function startOfMonth(iso: string): string {
+  return `${iso.slice(0, 7)}-01`;
+}
+
+export function endOfMonth(iso: string): string {
+  const date = toDate(startOfMonth(iso));
+  date.setUTCMonth(date.getUTCMonth() + 1);
+  date.setUTCDate(0);
+  return toISO(date);
+}
+
+/** Same day in another month; the 31st becomes the last day of a shorter month. */
+export function addMonths(iso: string, months: number): string {
+  const first = toDate(startOfMonth(iso));
+  first.setUTCMonth(first.getUTCMonth() + months);
+  const month = toISO(first).slice(0, 7);
+  const wanted = `${month}-${iso.slice(8)}`;
+  const last = endOfMonth(`${month}-01`);
+  return wanted > last ? last : wanted;
+}
+
+/** Every day shown on a month page: whole weeks, Monday to Sunday. */
+export function monthGrid(iso: string): string[] {
+  const first = startOfWeek(startOfMonth(iso));
+  const last = addDays(startOfWeek(endOfMonth(iso)), 6);
+  return Array.from({ length: daysBetween(first, last) + 1 }, (_, i) => addDays(first, i));
+}
+
+export function dayOfMonth(iso: string): number {
+  return Number(iso.slice(8));
+}
+
+export function formatMonthYear(iso: string): string {
+  return format(iso, { month: "long", year: "numeric" });
+}
+
+export function formatWeekdayShort(iso: string): string {
+  return format(iso, { weekday: "short" });
+}

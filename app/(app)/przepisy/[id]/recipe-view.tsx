@@ -137,7 +137,7 @@ export function RecipeView({
         {added && (
           <p className="message message-success" role="status">
             Dodano na {formatWeekday(added)}, {formatDayMonth(added)}.{" "}
-            <Link href={`/kalendarz?tydzien=${added}`} style={{ textDecoration: "underline" }}>
+            <Link href={`/kalendarz?widok=dzien&data=${added}`} style={{ textDecoration: "underline" }}>
               Zobacz kalendarz
             </Link>
           </p>

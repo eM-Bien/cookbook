@@ -9,7 +9,8 @@ Przepisy, plan posiłków na każdy dzień i wspólna lista zakupów dla dwóch 
 - **Kalorie** — na porcję przy przepisie i w sumie na każdy dzień w kalendarzu.
 - **Porcje** — zmiana liczby porcji przelicza ilości składników, także miary domowe
   („4 łyżki (40 g)”).
-- **Kalendarz** — przepisy przypisane do dni i posiłków, każdy z własną liczbą porcji.
+- **Kalendarz** — widok dnia, tygodnia i miesiąca; przepisy przypisane do dni i posiłków,
+  każdy z własną liczbą porcji.
 - **Lista zakupów** — sumuje składniki z wybranych dni; odhaczasz to, co już masz.
 - **Komentarze** — pod każdym przepisem, podpisane autorem.
 
