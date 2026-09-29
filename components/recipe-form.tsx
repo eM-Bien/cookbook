@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { importRecipe, saveRecipe } from "@/app/(app)/przepisy/actions";
 import { guessCategory, parseIngredientLines } from "@/lib/ingredients";
 import {
@@ -109,6 +109,7 @@ export function RecipeForm({
   const [error, setError] = useState<string | null>(null);
   const [importing, startImport] = useTransition();
   const [saving, startSave] = useTransition();
+  const router = useRouter();
 
   function fill(draft: RecipeDraft) {
     setTitle(draft.title);
@@ -160,6 +161,14 @@ export function RecipeForm({
     setRows((current) => [...current.filter((row) => row.name.trim()), ...parsed.map(toRow)]);
     setPasted("");
     setPasteOpen(false);
+  }
+
+  function cancel() {
+    // Going back returns to wherever the form was opened from: the recipe, the
+    // list or the calendar. A link to the recipe would open the drawer on top
+    // of this form instead. A form opened in a fresh tab has nowhere to go back to.
+    if (window.history.length > 1) router.back();
+    else router.push("/przepisy");
   }
 
   function submit() {
@@ -591,9 +600,9 @@ export function RecipeForm({
         <button className="btn btn-primary" disabled={saving}>
           {saving ? "Zapisywanie…" : "Zapisz przepis"}
         </button>
-        <Link href={recipeId ? `/przepisy/${recipeId}` : "/przepisy"} className="btn btn-ghost">
+        <button type="button" className="btn btn-ghost" onClick={cancel} disabled={saving}>
           Anuluj
-        </Link>
+        </button>
       </div>
     </form>
   );
