@@ -40,6 +40,8 @@ export function ShoppingListView({
   }
   // Asks before a new list throws away ticks and hand-written items.
   const confirmDialog = useRef<HTMLDialogElement>(null);
+  // "Jeden dzień": the list covers only the "from" date.
+  const [oneDay, setOneDay] = useState(suggestedFrom === suggestedTo);
   const [from, setFrom] = useState(suggestedFrom);
   const [to, setTo] = useState(suggestedTo);
   const [formOpen, setFormOpen] = useState(list === null || rangeRequested);
@@ -138,7 +140,8 @@ export function ShoppingListView({
   }
 
   function generate(mode: "new" | "refresh", confirmed = false) {
-    const range = mode === "refresh" && list ? [list.date_from, list.date_to] : [from, to];
+    const range =
+      mode === "refresh" && list ? [list.date_from, list.date_to] : oneDay ? [from, from] : [from, to];
     if (mode === "new" && items.length > 0 && !confirmed) {
       confirmDialog.current?.showModal();
       return;
@@ -235,12 +238,32 @@ export function ShoppingListView({
           <div>
             <h2>{list ? "Nowa lista" : "Utwórz listę zakupów"}</h2>
             <p className="muted small">
-              Składniki ze wszystkich posiłków zaplanowanych w tych dniach zostaną zsumowane.
+              {oneDay
+                ? "Składniki ze wszystkich posiłków zaplanowanych tego dnia zostaną zsumowane."
+                : "Składniki ze wszystkich posiłków zaplanowanych w tych dniach zostaną zsumowane."}
             </p>
           </div>
+          <nav className="chips" aria-label="Zakres listy">
+            <button
+              type="button"
+              className="chip"
+              aria-current={!oneDay ? "true" : undefined}
+              onClick={() => setOneDay(false)}
+            >
+              Kilka dni
+            </button>
+            <button
+              type="button"
+              className="chip"
+              aria-current={oneDay ? "true" : undefined}
+              onClick={() => setOneDay(true)}
+            >
+              Jeden dzień
+            </button>
+          </nav>
           <div className="form-grid">
             <label className="field">
-              <span>Od</span>
+              <span>{oneDay ? "Dzień" : "Od"}</span>
               <input
                 className="input"
                 type="date"
@@ -248,16 +271,18 @@ export function ShoppingListView({
                 onChange={(event) => setFrom(event.target.value)}
               />
             </label>
-            <label className="field">
-              <span>Do</span>
-              <input
-                className="input"
-                type="date"
-                value={to}
-                min={from}
-                onChange={(event) => setTo(event.target.value)}
-              />
-            </label>
+            {!oneDay && (
+              <label className="field">
+                <span>Do</span>
+                <input
+                  className="input"
+                  type="date"
+                  value={to}
+                  min={from}
+                  onChange={(event) => setTo(event.target.value)}
+                />
+              </label>
+            )}
           </div>
           <div>
             <button
@@ -266,7 +291,7 @@ export function ShoppingListView({
               onClick={() => generate("new")}
               disabled={pending}
             >
-              {pending ? "Tworzenie…" : "Utwórz listę"}
+              {pending ? "Tworzenie…" : oneDay ? "Utwórz listę na ten dzień" : "Utwórz listę"}
             </button>
           </div>
         </section>
