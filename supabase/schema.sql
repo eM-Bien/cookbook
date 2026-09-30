@@ -347,6 +347,28 @@ grant select, insert, update, delete on
 to authenticated;
 
 -- ---------------------------------------------------------------------------
+-- Waga (każda osoba prowadzi własny dziennik; drugiej osoby nie widać)
+-- ---------------------------------------------------------------------------
+
+create table if not exists public.weights (
+  user_id uuid not null default auth.uid() references public.profiles (id) on delete cascade,
+  day date not null,
+  kg numeric(5, 2) not null check (kg between 20 and 400),
+  created_at timestamptz not null default now(),
+  primary key (user_id, day)
+);
+
+alter table public.weights enable row level security;
+
+drop policy if exists "own weights" on public.weights;
+create policy "own weights" on public.weights
+  for all to authenticated
+  using (user_id = auth.uid() and public.is_member())
+  with check (user_id = auth.uid() and public.is_member());
+
+grant select, insert, update, delete on public.weights to authenticated;
+
+-- ---------------------------------------------------------------------------
 -- Zapisy wielotabelowe w jednej transakcji (wywoływane z aplikacji przez RPC)
 -- ---------------------------------------------------------------------------
 

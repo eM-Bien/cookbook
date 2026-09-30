@@ -2125,3 +2125,85 @@ a.day-name:hover {
 .hearts svg + svg {
   margin-left: -9px;
 }
+
+/* Weight diary on the profile page. */
+.weight-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.weight-form .btn {
+  height: 44px;
+}
+
+.weight-verdict {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.weight-chart {
+  margin: 0;
+}
+
+.weight-chart svg {
+  display: block;
+  width: 100%;
+}
+
+.chart-grid {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.chart-label {
+  fill: var(--muted);
+  font-size: 12px;
+}
+
+.chart-trend {
+  stroke: var(--muted);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 5;
+}
+
+.chart-line {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.chart-dot {
+  fill: var(--surface);
+  stroke: var(--primary);
+  stroke-width: 2;
+}
+
+.weight-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--border);
+}
+
+.weight-entry {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+@media (max-width: 700px) {
+  .weight-form {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .weight-form .btn {
+    grid-column: 1 / -1;
+  }
+}

@@ -15,6 +15,8 @@ Przepisy, plan posiłków na każdy dzień i wspólna lista zakupów dla dwóch 
 - **Lista zakupów** — sumuje składniki z wybranych dni; odhaczasz to, co już masz, a odhaczone
   pozycje trafiają na koniec, do sekcji „Posiadasz”.
 - **Komentarze** — pod każdym przepisem, podpisane autorem.
+- **Waga** — w profilu każda osoba prowadzi własny, prywatny dziennik wagi; wykres i linia
+  trendu pokazują, czy waga rośnie, spada, czy stoi w miejscu.
 
 Zmiany jednej osoby pojawiają się u drugiej od razu, bez odświeżania strony.
 
