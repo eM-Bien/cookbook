@@ -3,7 +3,6 @@ import { signOut } from "@/app/login/actions";
 import { requireUser } from "@/lib/auth";
 import { today } from "@/lib/dates";
 import type { WeightEntry } from "@/lib/weights";
-import { NameForm } from "./profile-forms";
 import { WeightSection } from "./weight";
 
 export const metadata: Metadata = { title: "Profil" };
@@ -29,14 +28,13 @@ export default async function ProfilePage() {
     <div className="container-narrow stack" style={{ margin: "0 auto" }}>
       <div className="page-header">
         <div>
-          <h1>Profil</h1>
+          <h1>No hejcia, {profile.data?.display_name ?? email}</h1>
           <p>{email}</p>
         </div>
         <form action={signOut}>
           <button className="btn">Wyloguj się</button>
         </form>
       </div>
-      <NameForm name={profile.data?.display_name ?? ""} />
       {weightsMissing ? (
         <section className="card stack">
           <h2>Waga</h2>
