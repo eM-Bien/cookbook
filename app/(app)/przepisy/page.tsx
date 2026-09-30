@@ -21,6 +21,13 @@ function first(value: string | string[] | undefined): string {
   return (Array.isArray(value) ? value[0] : value) ?? "";
 }
 
+/** "Madzik" → "madzik": a person's favourites are picked in the address by name. */
+function slug(name: string): string {
+  return searchable(name).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+const SHARED = "wspolne";
+
 export default async function RecipesPage({ searchParams }: PageProps<"/przepisy">) {
   const { supabase, userId } = await requireUser();
   const params = await searchParams;
@@ -28,21 +35,50 @@ export default async function RecipesPage({ searchParams }: PageProps<"/przepisy
   const tag = first(params.tag).trim();
   const requestedMeal = first(params.posilek);
   const meal = isMealType(requestedMeal) ? requestedMeal : null;
-  const onlyFavorites = first(params.ulubione) === "1";
+  const requestedFavorites = first(params.ulubione);
 
-  const [recipesResult, favoritesResult] = await Promise.all([
+  const [recipesResult, favoritesResult, profilesResult] = await Promise.all([
     supabase
       .from("recipes")
       .select(
         "id, title, description, servings, prep_minutes, calories, image_url, tags, meal_types",
       )
       .order("title"),
-    supabase.from("favorites").select("recipe_id").eq("user_id", userId),
+    supabase.from("favorites").select("user_id, recipe_id"),
+    supabase.from("profiles").select("id, display_name").order("display_name"),
   ]);
   if (recipesResult.error) throw new Error(recipesResult.error.message);
 
   const recipes = (recipesResult.data ?? []) as RecipeSummary[];
-  const favorites = new Set((favoritesResult.data ?? []).map((f) => f.recipe_id as string));
+
+  // Everyone's hearts: who likes which recipe. The viewer comes first among the people.
+  const people = (profilesResult.data ?? []).map((p) => ({
+    id: p.id as string,
+    name: p.display_name as string,
+    slug: slug(p.display_name as string),
+  }));
+  people.sort((a, b) => Number(b.id === userId) - Number(a.id === userId));
+  const likedBy = new Map<string, Set<string>>();
+  for (const f of favoritesResult.data ?? []) {
+    const recipeId = f.recipe_id as string;
+    if (!likedBy.has(recipeId)) likedBy.set(recipeId, new Set());
+    likedBy.get(recipeId)!.add(f.user_id as string);
+  }
+  const favorites = new Set(
+    [...likedBy].filter(([, users]) => users.has(userId)).map(([recipeId]) => recipeId),
+  );
+  const isShared = (recipeId: string) =>
+    people.length > 1 && people.every((person) => likedBy.get(recipeId)?.has(person.id));
+
+  // ?ulubione= names a person ("aro") or "wspolne"; anything else shows all recipes.
+  const favoritesOf =
+    requestedFavorites === SHARED
+      ? SHARED
+      : (people.find((person) => person.slug === requestedFavorites)?.slug ?? null);
+  const favoritePerson = people.find((person) => person.slug === favoritesOf);
+  const matchesFavorites = (recipeId: string) =>
+    !favoritesOf ||
+    (favoritesOf === SHARED ? isShared(recipeId) : likedBy.get(recipeId)?.has(favoritePerson!.id));
 
   // Tags are offered for the chosen meal only, so the row stays short and relevant.
   const inMeal = meal ? recipes.filter((recipe) => recipe.meal_types.includes(meal)) : recipes;
@@ -62,7 +98,7 @@ export default async function RecipesPage({ searchParams }: PageProps<"/przepisy
   const needle = searchable(query);
   const shown = inMeal.filter(
     (recipe) =>
-      (!onlyFavorites || favorites.has(recipe.id)) &&
+      matchesFavorites(recipe.id) &&
       (!tag || recipe.tags.includes(tag)) &&
       (!needle ||
         searchable(`${recipe.title} ${recipe.description ?? ""} ${recipe.tags.join(" ")}`).includes(
@@ -71,14 +107,18 @@ export default async function RecipesPage({ searchParams }: PageProps<"/przepisy
   );
 
   // Meal, favourites and tag narrow each other down; each link changes one of them.
-  const filterHref = (change: { posilek?: string | null; tag?: string | null; ulubione?: boolean }) => {
+  const filterHref = (change: {
+    posilek?: string | null;
+    tag?: string | null;
+    ulubione?: string | null;
+  }) => {
     const next = new URLSearchParams();
     const nextMeal = change.posilek === undefined ? meal : change.posilek;
     const nextTag = change.posilek !== undefined ? null : change.tag === undefined ? tag : change.tag;
-    const nextFavorites = change.ulubione ?? onlyFavorites;
+    const nextFavorites = change.ulubione === undefined ? favoritesOf : change.ulubione;
     if (nextMeal) next.set("posilek", nextMeal);
     if (nextTag) next.set("tag", nextTag);
-    if (nextFavorites) next.set("ulubione", "1");
+    if (nextFavorites) next.set("ulubione", nextFavorites);
     if (query) next.set("q", query);
     const text = next.toString();
     return text ? `/przepisy?${text}` : "/przepisy";
@@ -105,7 +145,7 @@ export default async function RecipesPage({ searchParams }: PageProps<"/przepisy
         />
         {meal && <input type="hidden" name="posilek" value={meal} />}
         {tag && <input type="hidden" name="tag" value={tag} />}
-        {onlyFavorites && <input type="hidden" name="ulubione" value="1" />}
+        {favoritesOf && <input type="hidden" name="ulubione" value={favoritesOf} />}
       </form>
 
       <nav className="chips" aria-label="Posiłek">
@@ -126,13 +166,32 @@ export default async function RecipesPage({ searchParams }: PageProps<"/przepisy
             {type.plural}
           </Link>
         ))}
-        <Link
-          href={filterHref({ ulubione: !onlyFavorites })}
-          className="chip"
-          aria-current={onlyFavorites ? "true" : undefined}
-        >
-          <Icon name="heart" size={15} /> Ulubione
-        </Link>
+      </nav>
+
+      <nav className="chips" aria-label="Ulubione">
+        {people.map((person) => (
+          <Link
+            key={person.id}
+            href={filterHref({ ulubione: favoritesOf === person.slug ? null : person.slug })}
+            className="chip"
+            aria-current={favoritesOf === person.slug ? "true" : undefined}
+          >
+            <Icon name="heart" size={15} /> {person.name}
+          </Link>
+        ))}
+        {people.length > 1 && (
+          <Link
+            href={filterHref({ ulubione: favoritesOf === SHARED ? null : SHARED })}
+            className="chip"
+            aria-current={favoritesOf === SHARED ? "true" : undefined}
+          >
+            <span className="hearts" aria-hidden="true">
+              <Icon name="heart" size={15} />
+              <Icon name="heart" size={15} />
+            </span>{" "}
+            Wspólne
+          </Link>
+        )}
       </nav>
 
       {tags.length > 0 && (
@@ -183,6 +242,13 @@ export default async function RecipesPage({ searchParams }: PageProps<"/przepisy
                   <span>
                     {recipe.servings} {servingsLabel(recipe.servings)}
                   </span>
+                  {people
+                    .filter((person) => person.id !== userId && likedBy.get(recipe.id)?.has(person.id))
+                    .map((person) => (
+                      <span key={person.id} className="liked-by" title={`Ulubione: ${person.name}`}>
+                        <Icon name="heart" size={13} /> {person.name}
+                      </span>
+                    ))}
                 </div>
               </div>
               <HeartButton recipeId={recipe.id} favorite={favorites.has(recipe.id)} />

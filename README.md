@@ -3,6 +3,7 @@
 Przepisy, plan posiłków na każdy dzień i wspólna lista zakupów dla dwóch osób.
 
 - **Przepisy** — dodawane ręcznie albo wczytywane z linku; serduszko oznacza ulubione.
+  Każda osoba ma swoje ulubione, a „Wspólne" to przepisy, które polubiły obie.
   Podzielone na śniadania, obiady i kolacje, z dodatkowymi rodzajami (owsianki, wege…).
 - **Zdjęcia** — dodawane z telefonu lub komputera przyciskiem aparatu na przepisie; przed
   wysłaniem są zmniejszane. Trafiają do publicznego magazynu `recipe-photos` w Supabase.

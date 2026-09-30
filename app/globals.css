@@ -2107,3 +2107,21 @@ a.day-name:hover {
   height: 18px;
   accent-color: var(--primary);
 }
+
+/* The other person's heart on a recipe row. */
+.liked-by {
+  color: var(--heart);
+}
+
+.liked-by svg {
+  fill: currentColor;
+}
+
+/* Two overlapping hearts: both people like it. */
+.hearts {
+  display: inline-flex;
+}
+
+.hearts svg + svg {
+  margin-left: -9px;
+}
