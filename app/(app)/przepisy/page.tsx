@@ -218,7 +218,7 @@ export default async function RecipesPage({ searchParams }: PageProps<"/przepisy
         </div>
       ) : shown.length === 0 ? (
         <div className="empty">
-          <p>Nic nie pasuje do tych filtrów.</p>
+          <p>Nie ma takich opcji :(</p>
           <Link href="/przepisy" className="btn">
             Pokaż wszystkie
           </Link>
