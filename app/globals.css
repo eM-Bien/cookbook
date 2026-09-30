@@ -214,6 +214,10 @@ h3 {
   justify-content: space-between;
 }
 
+.row-end {
+  justify-content: flex-end;
+}
+
 .stack {
   display: flex;
   flex-direction: column;

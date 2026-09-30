@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { closeOnBackdrop } from "@/components/close-on-backdrop";
 import { Icon } from "@/components/icons";
 import { formatRange } from "@/lib/dates";
 import { parseIngredientLine } from "@/lib/ingredients";
@@ -37,6 +38,8 @@ export function ShoppingListView({
     setReceived(initialItems);
     setItems(initialItems);
   }
+  // Asks before a new list throws away ticks and hand-written items.
+  const confirmDialog = useRef<HTMLDialogElement>(null);
   const [from, setFrom] = useState(suggestedFrom);
   const [to, setTo] = useState(suggestedTo);
   const [formOpen, setFormOpen] = useState(list === null || rangeRequested);
@@ -134,13 +137,10 @@ export function ShoppingListView({
     }
   }
 
-  function generate(mode: "new" | "refresh") {
+  function generate(mode: "new" | "refresh", confirmed = false) {
     const range = mode === "refresh" && list ? [list.date_from, list.date_to] : [from, to];
-    if (
-      mode === "new" &&
-      items.length > 0 &&
-      !window.confirm("Nowa lista zastąpi obecną, razem z odhaczeniami i dopisanymi pozycjami. Kontynuować?")
-    ) {
+    if (mode === "new" && items.length > 0 && !confirmed) {
+      confirmDialog.current?.showModal();
       return;
     }
     setError(null);
@@ -365,6 +365,45 @@ export function ShoppingListView({
           )}
         </>
       )}
+
+      <dialog
+        ref={confirmDialog}
+        className="dialog-mini"
+        aria-labelledby="replace-list-title"
+        onClick={closeOnBackdrop}
+      >
+        <div className="dialog-body">
+          <div className="dialog-head">
+            <h2 id="replace-list-title">Zastąpić listę?</h2>
+            <button
+              type="button"
+              className="icon-btn"
+              aria-label="Zamknij"
+              onClick={() => confirmDialog.current?.close()}
+            >
+              <Icon name="close" />
+            </button>
+          </div>
+          <p className="muted">
+            Nowa lista zastąpi obecną, razem z odhaczeniami i dopisanymi pozycjami.
+          </p>
+          <div className="row row-end">
+            <button type="button" className="btn" onClick={() => confirmDialog.current?.close()}>
+              Zostaw
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => {
+                confirmDialog.current?.close();
+                generate("new", true);
+              }}
+            >
+              Utwórz nową
+            </button>
+          </div>
+        </div>
+      </dialog>
     </div>
   );
 }
