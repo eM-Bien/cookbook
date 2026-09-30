@@ -37,8 +37,9 @@ html {
   height: 100%;
 }
 
-html,
-body {
+/* Only on html: an overflow on body would make body the scroll container
+   and stop the sticky nav from sticking. */
+html {
   max-width: 100vw;
   overflow-x: hidden;
 }
@@ -123,7 +124,7 @@ h3 {
   position: sticky;
   top: 0;
   z-index: 20;
-  background: color-mix(in srgb, var(--background) 45%, transparent);
+  background: color-mix(in srgb, var(--background) 72%, transparent);
   backdrop-filter: blur(14px);
 }
 
@@ -2421,4 +2422,9 @@ a.day-name:hover {
 .month-meals li[data-tone] {
   background: var(--meal);
   border-color: transparent;
+}
+
+/* Comment count on a recipe row. */
+.has-comments {
+  color: var(--primary);
 }

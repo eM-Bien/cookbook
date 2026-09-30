@@ -28,6 +28,12 @@ function slug(name: string): string {
 
 const SHARED = "wspolne";
 
+function commentsLabel(count: number): string {
+  if (count === 1) return "1 komentarz";
+  const few = count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 12 || count % 100 > 14);
+  return `${count} ${few ? "komentarze" : "komentarzy"}`;
+}
+
 export default async function RecipesPage({ searchParams }: PageProps<"/przepisy">) {
   const { supabase, userId } = await requireUser();
   const params = await searchParams;
@@ -37,7 +43,7 @@ export default async function RecipesPage({ searchParams }: PageProps<"/przepisy
   const meal = isMealType(requestedMeal) ? requestedMeal : null;
   const requestedFavorites = first(params.ulubione);
 
-  const [recipesResult, favoritesResult, profilesResult] = await Promise.all([
+  const [recipesResult, favoritesResult, profilesResult, commentsResult] = await Promise.all([
     supabase
       .from("recipes")
       .select(
@@ -46,6 +52,7 @@ export default async function RecipesPage({ searchParams }: PageProps<"/przepisy
       .order("title"),
     supabase.from("favorites").select("user_id, recipe_id"),
     supabase.from("profiles").select("id, display_name").order("display_name"),
+    supabase.from("comments").select("recipe_id"),
   ]);
   if (recipesResult.error) throw new Error(recipesResult.error.message);
 
@@ -64,6 +71,13 @@ export default async function RecipesPage({ searchParams }: PageProps<"/przepisy
     if (!likedBy.has(recipeId)) likedBy.set(recipeId, new Set());
     likedBy.get(recipeId)!.add(f.user_id as string);
   }
+  // How many comments each recipe has, so a note is visible without opening it.
+  const commentCounts = new Map<string, number>();
+  for (const c of commentsResult.data ?? []) {
+    const recipeId = c.recipe_id as string;
+    commentCounts.set(recipeId, (commentCounts.get(recipeId) ?? 0) + 1);
+  }
+
   const favorites = new Set(
     [...likedBy].filter(([, users]) => users.has(userId)).map(([recipeId]) => recipeId),
   );
@@ -242,6 +256,15 @@ export default async function RecipesPage({ searchParams }: PageProps<"/przepisy
                   <span>
                     {recipe.servings} {servingsLabel(recipe.servings)}
                   </span>
+                  {(commentCounts.get(recipe.id) ?? 0) > 0 && (
+                    <span
+                      className="has-comments"
+                      title={commentsLabel(commentCounts.get(recipe.id)!)}
+                      aria-label={commentsLabel(commentCounts.get(recipe.id)!)}
+                    >
+                      <Icon name="comment" size={14} /> {commentCounts.get(recipe.id)}
+                    </span>
+                  )}
                   {people
                     .filter((person) => person.id !== userId && likedBy.get(recipe.id)?.has(person.id))
                     .map((person) => (
