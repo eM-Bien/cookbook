@@ -10,7 +10,7 @@ Przepisy, plan posiłków na każdy dzień i wspólna lista zakupów dla dwóch 
 - **Porcje** — zmiana liczby porcji przelicza ilości składników, także miary domowe
   („4 łyżki (40 g)”).
 - **Kalendarz** — widok dnia, tygodnia i miesiąca; przepisy przypisane do dni i posiłków,
-  każdy z własną liczbą porcji.
+  każdy z własną liczbą porcji. Obiad można ustawić na dwa dni naraz.
 - **Lista zakupów** — sumuje składniki z wybranych dni; odhaczasz to, co już masz, a odhaczone
   pozycje trafiają na koniec, do sekcji „Posiadasz”.
 - **Komentarze** — pod każdym przepisem, podpisane autorem.

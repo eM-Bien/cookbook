@@ -7,6 +7,7 @@ import { Icon } from "@/components/icons";
 import { RecipeThumb } from "@/components/recipe-thumb";
 import { Stepper } from "@/components/stepper";
 import {
+  addDays,
   dayOfMonth,
   formatDayMonth,
   formatWeekday,
@@ -30,7 +31,7 @@ export type RecipeOption = {
 type Change =
   | { type: "servings"; id: string; servings: number }
   | { type: "remove"; id: string }
-  | { type: "replace"; id: string; recipe: RecipeOption };
+  | { type: "replace"; id: string; recipe: RecipeOption; twoDays?: boolean };
 
 /** What the compact list is choosing for: a meal to swap, or an empty slot to fill. */
 type Picking = { date: string; meal: MealType; entry: MealPlanEntry | null };
@@ -93,6 +94,8 @@ export function Planner({
   const [picking, setPicking] = useState<Picking | null>(null);
   const [pickerSearch, setPickerSearch] = useState("");
   const [pickerError, setPickerError] = useState<string | null>(null);
+  // A lunch is often cooked for two days; the choice then lands on both.
+  const [twoDays, setTwoDays] = useState(false);
 
   function change(update: Change) {
     setError(null);
@@ -102,7 +105,7 @@ export function Planner({
         update.type === "remove"
           ? await removeMeal(update.id)
           : update.type === "replace"
-            ? await replaceMeal(update.id, update.recipe.id)
+            ? await replaceMeal(update.id, update.recipe.id, update.twoDays)
             : await setMealServings(update.id, update.servings);
       if (!result.ok) setError(result.error);
     });
@@ -110,6 +113,7 @@ export function Planner({
 
   function openDialog(forDay: string) {
     setDay(forDay);
+    setTwoDays(false);
     setSearch("");
     setRecipeId(null);
     setDialogError(null);
@@ -120,13 +124,15 @@ export function Planner({
     setPicking(target);
     setPickerSearch("");
     setPickerError(null);
+    setTwoDays(false);
     picker.current?.showModal();
   }
 
   function pick(recipe: RecipeOption) {
     if (!picking) return;
+    const spansTwoDays = picking.meal === "obiad" && twoDays;
     if (picking.entry) {
-      change({ type: "replace", id: picking.entry.id, recipe });
+      change({ type: "replace", id: picking.entry.id, recipe, twoDays: spansTwoDays });
       picker.current?.close();
       return;
     }
@@ -137,6 +143,7 @@ export function Planner({
         mealType: picking.meal,
         recipeId: recipe.id,
         servings: recipe.servings,
+        twoDays: spansTwoDays,
       });
       if (result.ok) picker.current?.close();
       else setPickerError(result.error);
@@ -155,7 +162,13 @@ export function Planner({
     }
     setDialogError(null);
     startAdding(async () => {
-      const result = await addMeal({ date: day, mealType, recipeId, servings });
+      const result = await addMeal({
+        date: day,
+        mealType,
+        recipeId,
+        servings,
+        twoDays: mealType === "obiad" && twoDays,
+      });
       if (result.ok) dialog.current?.close();
       else setDialogError(result.error);
     });
@@ -239,6 +252,21 @@ export function Planner({
       </div>
     </div>
   );
+
+  /** "Na dwa dni" for a lunch: the same dish again the day after. */
+  const twoDaysOption = (date: string, meal: MealType) =>
+    meal === "obiad" && (
+      <label className="two-days">
+        <input
+          type="checkbox"
+          checked={twoDays}
+          onChange={(event) => setTwoDays(event.target.checked)}
+        />
+        <span>
+          Na dwa dni <span className="muted">(też {formatWeekday(addDays(date, 1))})</span>
+        </span>
+      </label>
+    );
 
   const pickerNeedle = pickerSearch.trim().toLowerCase();
   const pickable = recipes.filter((recipe) =>
@@ -442,6 +470,8 @@ export function Planner({
             />
           </div>
 
+          {picking && twoDaysOption(picking.date, picking.meal)}
+
           <ul className="pick-list" aria-label="Przepisy do wyboru">
             {pickable.map((recipe) => {
               const current = picking?.entry?.recipe.id === recipe.id;
@@ -591,6 +621,8 @@ export function Planner({
                 <span className="label">Porcje</span>
                 <Stepper value={servings} onChange={setServings} label="Liczba porcji" />
               </div>
+
+              {twoDaysOption(day, mealType)}
 
               {dialogError && (
                 <p className="message message-error" role="alert">
