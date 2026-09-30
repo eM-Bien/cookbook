@@ -2049,3 +2049,43 @@ a.day-name:hover {
 .owned-toggle svg {
   color: var(--muted);
 }
+
+/* Swap and remove icons on a meal card (week view) and a month entry. */
+.meal-actions {
+  display: flex;
+  gap: 2px;
+  margin-right: -4px;
+}
+
+.meal-head .meal-actions .icon-btn {
+  margin-right: 0;
+}
+
+.month-meals li {
+  display: flex;
+  align-items: center;
+}
+
+.month-meals a {
+  flex: 1;
+  min-width: 0;
+}
+
+.month-swap {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  margin-right: 2px;
+  opacity: 0;
+}
+
+.month-meals li:hover .month-swap,
+.month-swap:focus-visible {
+  opacity: 1;
+}
+
+@media (max-width: 700px) {
+  .month-swap {
+    display: none;
+  }
+}

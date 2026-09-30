@@ -173,14 +173,31 @@ export function Planner({
     <div key={entry.id} className="meal" data-tone={MEAL_TONE[entry.meal_type]}>
       <div className="meal-head">
         <span className="meal-type">{MEAL_LABEL[entry.meal_type]}</span>
-        <button
-          type="button"
-          className="icon-btn"
-          aria-label={`Usuń ${entry.recipe.title} z ${formatWeekday(entry.plan_date)}`}
-          onClick={() => change({ type: "remove", id: entry.id })}
-        >
-          <Icon name="close" size={15} />
-        </button>
+        <span className="meal-actions">
+          {/* The day view has a labelled "Zamień" button below instead. */}
+          {!withPhoto && (
+            <button
+              type="button"
+              className="icon-btn"
+              aria-label={`Zamień ${entry.recipe.title}`}
+              title="Zamień"
+              onClick={() =>
+                openPicker({ date: entry.plan_date, meal: entry.meal_type, entry })
+              }
+            >
+              <Icon name="refresh" size={15} />
+            </button>
+          )}
+          <button
+            type="button"
+            className="icon-btn"
+            aria-label={`Usuń ${entry.recipe.title} z ${formatWeekday(entry.plan_date)}`}
+            title="Usuń"
+            onClick={() => change({ type: "remove", id: entry.id })}
+          >
+            <Icon name="close" size={15} />
+          </button>
+        </span>
       </div>
       <div className="meal-main">
         {withPhoto && (
@@ -365,6 +382,17 @@ export function Planner({
                           >
                             {entry.recipe.title}
                           </Link>
+                          <button
+                            type="button"
+                            className="icon-btn month-swap"
+                            aria-label={`Zamień ${entry.recipe.title}`}
+                            title="Zamień"
+                            onClick={() =>
+                              openPicker({ date, meal: entry.meal_type, entry })
+                            }
+                          >
+                            <Icon name="refresh" size={13} />
+                          </button>
                         </li>
                       ))}
                     </ul>
