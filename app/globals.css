@@ -128,7 +128,7 @@ h3 {
 }
 
 .nav-inner {
-  max-width: 1180px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0 16px;
   height: var(--nav-height);
@@ -180,7 +180,7 @@ h3 {
 
 .container {
   width: 100%;
-  max-width: 1180px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 12px 16px 64px;
   flex: 1;
@@ -1124,6 +1124,18 @@ code {
   justify-content: space-between;
   gap: 4px;
   min-height: 24px;
+}
+
+/* The label gives way before the icons do: "ŚNIADANIE ⟳ ×" must fit in a narrow column. */
+.meal-head .meal-type {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meal-head .meal-actions {
+  flex: none;
 }
 
 .meal-head .icon-btn {
@@ -2387,7 +2399,8 @@ a.day-name:hover {
 
 /* A glowing tint of the meal colour with a bright stripe on the left. */
 .meal[data-tone] {
-  border-left: 4px solid var(--meal);
+  border-left: 3px solid var(--meal);
+  padding-left: 10px;
   background:
     linear-gradient(135deg, color-mix(in srgb, var(--meal) 34%, transparent), transparent 70%),
     color-mix(in srgb, var(--meal) 14%, var(--surface-muted));
@@ -2395,7 +2408,9 @@ a.day-name:hover {
 
 .meal[data-tone] .meal-type {
   color: var(--meal);
-  font-weight: 700;
+  font-weight: 600;
+  font-size: 0.68rem;
+  letter-spacing: 0.02em;
   opacity: 1;
 }
 
