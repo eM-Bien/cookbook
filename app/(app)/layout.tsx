@@ -25,7 +25,7 @@ export default async function AppLayout({
     supabase.from("profiles").select("display_name").eq("id", userId).maybeSingle(),
     // Asks for the columns added most recently, to notice a database that was
     // set up with an older schema.sql.
-    supabase.from("recipe_ingredients").select("alt_quantity, group_name").limit(1),
+    supabase.from("recipes").select("thermomix_steps").limit(1),
   ]);
 
   if (membership.error) return <SetupNotice reason="schema" />;

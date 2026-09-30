@@ -70,6 +70,9 @@ export function validateRecipe(input: unknown): Validated {
   const steps = Array.isArray(raw.steps)
     ? raw.steps.map((s) => text(s, 3000)).filter(Boolean).slice(0, 60)
     : [];
+  const thermomixSteps = Array.isArray(raw.thermomix_steps)
+    ? raw.thermomix_steps.map((s) => text(s, 3000)).filter(Boolean).slice(0, 60)
+    : [];
 
   const ingredients: Ingredient[] = [];
   for (const item of Array.isArray(raw.ingredients) ? raw.ingredients.slice(0, 100) : []) {
@@ -120,6 +123,7 @@ export function validateRecipe(input: unknown): Validated {
       image_url: imageUrl,
       tags,
       steps,
+      thermomix_steps: thermomixSteps,
       meal_types: mealTypes,
       notes: text(raw.notes, 3000),
       ingredients,

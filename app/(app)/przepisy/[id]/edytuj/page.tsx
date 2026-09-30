@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { RecipeForm } from "@/components/recipe-form";
+import { SetupNotice } from "@/components/setup-notice";
 import { requireUser } from "@/lib/auth";
 import { isUuid, type Ingredient, type Recipe } from "@/lib/types";
 
@@ -15,7 +16,7 @@ export default async function EditRecipePage({ params }: PageProps<"/przepisy/[i
     supabase
       .from("recipes")
       .select(
-        "id, title, description, servings, prep_minutes, calories, source_url, image_url, tags, steps, meal_types, notes, created_at",
+        "id, title, description, servings, prep_minutes, calories, source_url, image_url, tags, steps, thermomix_steps, meal_types, notes, created_at",
       )
       .eq("id", id)
       .maybeSingle(),
@@ -26,6 +27,7 @@ export default async function EditRecipePage({ params }: PageProps<"/przepisy/[i
       .order("position"),
   ]);
 
+  if (recipeResult.error?.code === "42703") return <SetupNotice reason="update" />;
   if (recipeResult.error) throw new Error(recipeResult.error.message);
   const recipe = recipeResult.data as Recipe | null;
   if (!recipe) notFound();
@@ -47,6 +49,7 @@ export default async function EditRecipePage({ params }: PageProps<"/przepisy/[i
           image_url: recipe.image_url ?? "",
           tags: recipe.tags,
           steps: recipe.steps,
+          thermomix_steps: recipe.thermomix_steps,
           ingredients: (ingredientsResult.data ?? []) as Ingredient[],
         }}
       />

@@ -235,7 +235,9 @@ alter table public.recipes
   -- Na jakie posiłki nadaje się przepis; pusta lista = na każdy.
   add column if not exists meal_types text[] not null default '{}'
     check (meal_types <@ array['sniadanie', 'obiad', 'kolacja', 'przekaska']),
-  add column if not exists notes text;
+  add column if not exists notes text,
+  -- Kroki dla Thermomiksa (pusta lista = brak wersji TM).
+  add column if not exists thermomix_steps text[] not null default '{}';
 
 alter table public.recipe_ingredients
   -- Miara domowa obok wagi, np. 4 łyżki przy 40 g.
@@ -387,6 +389,7 @@ declare
   v_id uuid;
   v_tags text[];
   v_steps text[];
+  v_thermomix text[];
   v_meal_types text[];
 begin
   select coalesce(array_agg(t.value order by t.ord), '{}')
@@ -404,10 +407,15 @@ begin
     from jsonb_array_elements_text(coalesce(p_recipe -> 'steps', '[]'::jsonb))
       with ordinality as t(value, ord);
 
+  select coalesce(array_agg(t.value order by t.ord), '{}')
+    into v_thermomix
+    from jsonb_array_elements_text(coalesce(p_recipe -> 'thermomix_steps', '[]'::jsonb))
+      with ordinality as t(value, ord);
+
   if p_id is null then
     insert into public.recipes
       (title, description, servings, prep_minutes, calories, source_url, image_url,
-       tags, steps, meal_types, notes)
+       tags, steps, meal_types, notes, thermomix_steps)
     values (
       p_recipe ->> 'title',
       nullif(p_recipe ->> 'description', ''),
@@ -419,7 +427,8 @@ begin
       v_tags,
       v_steps,
       v_meal_types,
-      nullif(p_recipe ->> 'notes', '')
+      nullif(p_recipe ->> 'notes', ''),
+      v_thermomix
     )
     returning id into v_id;
   else
@@ -435,6 +444,7 @@ begin
       steps = v_steps,
       meal_types = v_meal_types,
       notes = nullif(p_recipe ->> 'notes', ''),
+      thermomix_steps = v_thermomix,
       updated_at = now()
     where id = p_id
     returning id into v_id;

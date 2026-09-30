@@ -4,10 +4,12 @@ import { HeartButton } from "@/components/heart-button";
 import { Icon } from "@/components/icons";
 import { LiveRefresh } from "@/components/live-refresh";
 import { RecipePhotoButton } from "@/components/photo-picker";
+import { SetupNotice } from "@/components/setup-notice";
 import { requireUser } from "@/lib/auth";
 import { today } from "@/lib/dates";
 import { dishEmoji, isCutout, toneFor } from "@/lib/look";
 import { MEAL_TYPES, type Ingredient, type Recipe, type RecipeComment } from "@/lib/types";
+import { PreparationTabs } from "@/components/preparation-tabs";
 import { Comments } from "./comments";
 import { DeleteRecipeButton } from "./delete-recipe-button";
 import { RecipeView } from "./recipe-view";
@@ -22,7 +24,7 @@ export async function RecipeContent({ id, inDrawer = false }: { id: string; inDr
     supabase
       .from("recipes")
       .select(
-        "id, title, description, servings, prep_minutes, calories, source_url, image_url, tags, steps, meal_types, notes, created_at",
+        "id, title, description, servings, prep_minutes, calories, source_url, image_url, tags, steps, thermomix_steps, meal_types, notes, created_at",
       )
       .eq("id", id)
       .maybeSingle(),
@@ -39,6 +41,9 @@ export async function RecipeContent({ id, inDrawer = false }: { id: string; inDr
     supabase.from("favorites").select("user_id, profile:profiles(display_name)").eq("recipe_id", id),
   ]);
 
+  // The drawer renders on its own, so a database missing a newer column is
+  // explained here too, instead of crashing the page.
+  if (recipeResult.error?.code === "42703") return <SetupNotice reason="update" />;
   if (recipeResult.error) throw new Error(recipeResult.error.message);
   const recipe = recipeResult.data as Recipe | null;
   if (!recipe) notFound();
@@ -123,18 +128,7 @@ export async function RecipeContent({ id, inDrawer = false }: { id: string; inDr
 
         <RecipeView recipe={recipe} ingredients={ingredients} today={today()} />
 
-        {recipe.steps.length > 0 && (
-          <section>
-            <h2 className="section-title">Przygotowanie</h2>
-            <ol className="step-list">
-              {recipe.steps.map((step, index) => (
-                <li key={index}>
-                  <span>{step}</span>
-                </li>
-              ))}
-            </ol>
-          </section>
-        )}
+        <PreparationTabs steps={recipe.steps} thermomix={recipe.thermomix_steps} />
 
         {recipe.notes && (
           <section>

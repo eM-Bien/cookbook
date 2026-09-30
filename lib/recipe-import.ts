@@ -166,6 +166,7 @@ function fromStructuredData(html: string, pageUrl: string): RecipeDraft | null {
       image_url: parseImage(recipe.image, pageUrl),
       tags: parseTags(recipe),
       steps: parseSteps(recipe.recipeInstructions),
+      thermomix_steps: [],
       ingredients,
     };
   }
@@ -254,6 +255,7 @@ function fromPageText(html: string, pageUrl: string): RecipeDraft | null {
       image_url: parseImage(metaContent(html, "og:image"), pageUrl),
       tags: [],
       steps,
+      thermomix_steps: [],
       ingredients,
     };
   }

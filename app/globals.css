@@ -2521,3 +2521,33 @@ a.day-name:hover {
   margin: 0 auto;
   padding-top: 40px;
 }
+
+/* Recipe steps: classic and Thermomix under two tabs. */
+.section-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  margin-bottom: 10px;
+}
+
+.section-head .section-title {
+  margin-bottom: 0;
+}
+
+.prep-tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.prep-tabs .chip {
+  padding: 5px 13px;
+  font-size: 0.82rem;
+}
+
+.prep-tabs .chip[aria-selected="true"] {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-contrast);
+}

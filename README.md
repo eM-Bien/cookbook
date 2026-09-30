@@ -7,6 +7,8 @@ Przepisy, plan posiłków na każdy dzień i wspólna lista zakupów dla dwóch 
   Podzielone na śniadania, obiady i kolacje, z dodatkowymi rodzajami (owsianki, wege…).
 - **Zdjęcia** — dodawane z telefonu lub komputera przyciskiem aparatu na przepisie; przed
   wysłaniem są zmniejszane. Trafiają do publicznego magazynu `recipe-photos` w Supabase.
+- **Wersja w Thermomiksie** — opcjonalne kroki dla Thermomiksa w edycji przepisu; w karcie
+  przepisu pojawiają się jako druga zakładka obok wersji klasycznej.
 - **Kalorie** — na porcję przy przepisie i w sumie na każdy dzień w kalendarzu.
 - **Porcje** — zmiana liczby porcji przelicza ilości składników, także miary domowe
   („4 łyżki (40 g)”).

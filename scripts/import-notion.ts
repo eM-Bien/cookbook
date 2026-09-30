@@ -267,6 +267,7 @@ export function parseRecipe(markdown: string, file: string, folder = ""): Parsed
       image_url: "",
       tags: [...new Set(tags)],
       steps,
+      thermomix_steps: [],
       meal_types: [...new Set(mealTypes)],
       notes: notes.join("\n"),
       ingredients,

@@ -58,6 +58,8 @@ export type Recipe = {
   image_url: string | null;
   tags: string[];
   steps: string[];
+  /** The same dish made in a Thermomix; empty when there is no such version. */
+  thermomix_steps: string[];
   /** Meals the recipe suits; empty means any. */
   meal_types: MealType[];
   notes: string | null;
@@ -88,6 +90,7 @@ export type RecipeDraft = {
   image_url: string;
   tags: string[];
   steps: string[];
+  thermomix_steps: string[];
   meal_types: MealType[];
   notes: string;
   ingredients: Ingredient[];

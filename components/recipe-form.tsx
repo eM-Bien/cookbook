@@ -43,6 +43,7 @@ const EMPTY: RecipeDraft = {
   image_url: "",
   tags: [],
   steps: [],
+  thermomix_steps: [],
   meal_types: [],
   notes: "",
   ingredients: [],
@@ -101,6 +102,8 @@ export function RecipeForm({
   const [tags, setTags] = useState(initial.tags.join(", "));
   const [rows, setRows] = useState(() => toRows(initial.ingredients));
   const [steps, setSteps] = useState(() => toSteps(initial.steps));
+  // Thermomix steps are typed one per line; a blank field means no TM version.
+  const [thermomix, setThermomix] = useState(initial.thermomix_steps.join("\n"));
 
   const [importUrl, setImportUrl] = useState("");
   const [importMessage, setImportMessage] = useState<{ ok: boolean; text: string } | null>(null);
@@ -124,6 +127,7 @@ export function RecipeForm({
     setTags(draft.tags.join(", "));
     setRows(toRows(draft.ingredients));
     setSteps(toSteps(draft.steps));
+    setThermomix(draft.thermomix_steps.join("\n"));
   }
 
   function runImport() {
@@ -225,6 +229,10 @@ export function RecipeForm({
       image_url: imageUrl,
       tags: tags.split(","),
       steps: steps.map((step) => step.text),
+      thermomix_steps: thermomix
+        .split("\n")
+        .map((line) => line.replace(/^\s*\d+[.)]\s*/, "").trim())
+        .filter(Boolean),
       ingredients,
     };
 
@@ -575,6 +583,24 @@ export function RecipeForm({
             <Icon name="plus" size={16} /> Dodaj krok
           </button>
         </div>
+      </section>
+
+      <section className="card stack">
+        <div>
+          <h2>Wersja w Thermomiksie</h2>
+          <p className="muted small">
+            Opcjonalnie. Każdy krok w osobnej linii — w przepisie pojawi się jako druga zakładka.
+          </p>
+        </div>
+        <textarea
+          className="input"
+          rows={thermomix ? 8 : 3}
+          maxLength={20000}
+          value={thermomix}
+          onChange={(event) => setThermomix(event.target.value)}
+          placeholder={"Cebulę: 3 s / obr. 5\nDodaj oliwę: 3 min / 120°C / obr. 1"}
+          aria-label="Kroki w Thermomiksie"
+        />
       </section>
 
       <section className="card stack">
