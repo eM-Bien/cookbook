@@ -239,8 +239,12 @@ export default async function RecipesPage({ searchParams }: PageProps<"/przepisy
         </div>
       ) : (
         <ul className="recipe-list" style={{ listStyle: "none" }}>
-          {shown.map((recipe) => (
-            <li key={recipe.id} className="recipe-row">
+          {shown.map((recipe, index) => (
+            <li
+              key={recipe.id}
+              className="recipe-row enter"
+              style={{ "--i": Math.min(index, 14) } as React.CSSProperties}
+            >
               <RecipeThumb title={recipe.title} imageUrl={recipe.image_url} tags={recipe.tags} />
               <div className="recipe-row-text">
                 <Link href={`/przepisy/${recipe.id}`} className="recipe-row-title">

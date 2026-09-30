@@ -169,13 +169,21 @@ export function ShoppingListView({
     groups.set(item.category, [...(groups.get(item.category) ?? []), item]);
   }
 
+  // Rows rise in one after another down the page; the delay stops growing
+  // after twenty rows so a long list does not keep the reader waiting.
+  let order = 0;
   const row = (item: ShoppingItem) => {
+    const position = Math.min(order++, 20);
     const amount = formatAmounts(item.quantity, item.unit, item.alt_quantity, item.alt_unit);
     const details = [amount, item.is_manual ? "dopisane" : item.sources.join(", ")]
       .filter(Boolean)
       .join(" · ");
     return (
-      <li key={item.id} className={item.checked ? "shopping-item is-checked" : "shopping-item"}>
+      <li
+        key={item.id}
+        className={item.checked ? "shopping-item is-checked enter" : "shopping-item enter"}
+        style={{ "--i": position } as React.CSSProperties}
+      >
         <label>
           <input type="checkbox" checked={item.checked} onChange={() => void toggle(item)} />
           <span className="shopping-text">

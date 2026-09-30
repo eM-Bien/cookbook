@@ -293,11 +293,16 @@ export function Planner({
 
       {view === "tydzien" && (
         <div className="week">
-          {days.map((date) => {
+          {days.map((date, index) => {
             const meals = mealsOn(date);
             const calories = caloriesOf(meals);
             return (
-              <section key={date} className={dayClass(date, "day")} aria-label={formatWeekday(date)}>
+              <section
+                key={date}
+                className={dayClass(date, "day enter")}
+                style={{ "--i": index } as React.CSSProperties}
+                aria-label={formatWeekday(date)}
+              >
                 <div className="day-head">
                   <Link href={`/kalendarz?widok=dzien&data=${date}`} className="day-name">
                     {formatWeekday(date)}
@@ -330,10 +335,10 @@ export function Planner({
                   Razem {calories}
                 </p>
               )}
-              {MEAL_TYPES.map((slot) => {
+              {MEAL_TYPES.map((slot, index) => {
                 const inSlot = meals.filter((entry) => entry.meal_type === slot.value);
                 return (
-                  <div key={slot.value} className="slot">
+                  <div key={slot.value} className="slot enter" style={{ "--i": index } as React.CSSProperties}>
                     <h2 className="slot-title">{slot.label}</h2>
                     <div className="slot-meals">
                       {inSlot.map((entry) => mealCard(entry, true))}
@@ -365,7 +370,7 @@ export function Planner({
           </div>
           {Array.from({ length: days.length / 7 }, (_, week) => (
             <div key={week} className="month-row" role="row">
-              {days.slice(week * 7, week * 7 + 7).map((date) => {
+              {days.slice(week * 7, week * 7 + 7).map((date, column) => {
                 const meals = mealsOn(date);
                 const calories = caloriesOf(meals);
                 const outside = !date.startsWith(month);
@@ -373,7 +378,8 @@ export function Planner({
                   <div
                     key={date}
                     role="gridcell"
-                    className={dayClass(date, outside ? "month-day is-outside" : "month-day")}
+                    className={dayClass(date, outside ? "month-day is-outside enter" : "month-day enter")}
+                    style={{ "--i": week + column } as React.CSSProperties}
                   >
                     <div className="month-day-head">
                       <Link

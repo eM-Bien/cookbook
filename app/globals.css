@@ -60,17 +60,39 @@ body {
 /* A quiet glow behind everything: warm amber top-left, cool dusk bottom-right.
    Fixed to the viewport (a pseudo-element, since background-attachment: fixed
    is unreliable on phones), so it never scrolls or repeats. */
-body::before {
+body {
+  background: linear-gradient(160deg, #1c1611 0%, var(--background) 50%, #0a0a12 100%) fixed;
+}
+
+/* Two blobs of light, each on its own slow path, so the background visibly
+   wanders. They are fixed pseudo-elements: background-attachment: fixed is
+   unreliable on phones. */
+body::before,
+body::after {
   content: "";
   position: fixed;
-  inset: 0;
   z-index: -1;
+  width: 110vmax;
+  height: 110vmax;
+  border-radius: 50%;
   pointer-events: none;
-  background:
-    radial-gradient(70% 55% at 0% 0%, rgb(242 168 29 / 32%), transparent 70%),
-    radial-gradient(60% 50% at 100% 100%, rgb(120 90 200 / 34%), transparent 70%),
-    radial-gradient(45% 40% at 85% 10%, rgb(255 120 60 / 12%), transparent 70%),
-    linear-gradient(160deg, #221a14 0%, var(--background) 50%, #0a0a12 100%);
+  will-change: transform;
+}
+
+/* Amber: starts top-left, sweeps across the top and down the right side. */
+body::before {
+  top: -55vmax;
+  left: -55vmax;
+  background: radial-gradient(circle at center, rgb(242 168 29 / 40%), rgb(242 168 29 / 12%) 38%, transparent 66%);
+  animation: glow-amber 26s ease-in-out infinite;
+}
+
+/* Violet: starts bottom-right and wanders the opposite way. */
+body::after {
+  right: -55vmax;
+  bottom: -55vmax;
+  background: radial-gradient(circle at center, rgb(120 90 220 / 42%), rgb(120 90 220 / 14%) 38%, transparent 66%);
+  animation: glow-violet 32s ease-in-out infinite;
 }
 
 a {
@@ -2426,4 +2448,70 @@ a.day-name:hover {
 /* Comment count on a recipe row. */
 .has-comments {
   color: var(--primary);
+}
+
+/* ---------- Motion ---------- */
+
+/* The background glow slowly wanders and breathes. */
+@keyframes glow-amber {
+  0% {
+    transform: translate(22vw, 18vh) scale(1);
+  }
+  33% {
+    transform: translate(70vw, 10vh) scale(1.15);
+  }
+  66% {
+    transform: translate(55vw, 70vh) scale(0.9);
+  }
+  100% {
+    transform: translate(22vw, 18vh) scale(1);
+  }
+}
+
+@keyframes glow-violet {
+  0% {
+    transform: translate(-20vw, -15vh) scale(1);
+  }
+  40% {
+    transform: translate(-65vw, -30vh) scale(1.2);
+  }
+  70% {
+    transform: translate(-30vw, -75vh) scale(0.95);
+  }
+  100% {
+    transform: translate(-20vw, -15vh) scale(1);
+  }
+}
+
+/* Cards rise into place one after another when a page opens.
+   --i is the element's position in its list. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(22px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.enter {
+  animation: rise 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  animation-delay: calc(var(--i, 0) * 55ms);
+}
+
+.page-header,
+.calendar-header {
+  animation: rise 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body::before,
+  body::after,
+  .enter,
+  .page-header,
+  .calendar-header {
+    animation: none;
+  }
 }
