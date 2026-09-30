@@ -318,7 +318,7 @@ export function ShoppingListView({
               style={{ flex: 1, minWidth: 200, borderColor: "transparent", borderRadius: 999 }}
               value={newItem}
               onChange={(event) => setNewItem(event.target.value)}
-              placeholder="Dopisz coś, np. 2 l mleka"
+              placeholder="Dopisz coś swojego, czego potrzebujesz"
               aria-label="Nowa pozycja na liście"
               maxLength={200}
             />
