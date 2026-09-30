@@ -40,7 +40,7 @@ export function ShoppingListView({
   const [from, setFrom] = useState(suggestedFrom);
   const [to, setTo] = useState(suggestedTo);
   const [formOpen, setFormOpen] = useState(list === null || rangeRequested);
-  const [hideChecked, setHideChecked] = useState(false);
+  const [ownedOpen, setOwnedOpen] = useState(true);
   const [newItem, setNewItem] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -159,13 +159,43 @@ export function ShoppingListView({
     });
   }
 
+  // What is still to buy is grouped by shop section; what is already at home
+  // moves to one list at the end.
   const sorted = [...items].sort(compareItems);
-  const checkedCount = items.filter((item) => item.checked).length;
-  const visible = hideChecked ? sorted.filter((item) => !item.checked) : sorted;
+  const toBuy = sorted.filter((item) => !item.checked);
+  const owned = sorted.filter((item) => item.checked);
   const groups = new Map<string, ShoppingItem[]>();
-  for (const item of visible) {
+  for (const item of toBuy) {
     groups.set(item.category, [...(groups.get(item.category) ?? []), item]);
   }
+
+  const row = (item: ShoppingItem) => {
+    const amount = formatAmounts(item.quantity, item.unit, item.alt_quantity, item.alt_unit);
+    const details = [amount, item.is_manual ? "dopisane" : item.sources.join(", ")]
+      .filter(Boolean)
+      .join(" · ");
+    return (
+      <li key={item.id} className={item.checked ? "shopping-item is-checked" : "shopping-item"}>
+        <label>
+          <input type="checkbox" checked={item.checked} onChange={() => void toggle(item)} />
+          <span className="shopping-text">
+            <span className="shopping-name">{item.name}</span>
+            {details && <span className="shopping-sources">{details}</span>}
+          </span>
+        </label>
+        {item.is_manual && (
+          <button
+            type="button"
+            className="icon-btn"
+            aria-label={`Usuń ${item.name}`}
+            onClick={() => void removeItem(item)}
+          >
+            <Icon name="close" size={16} />
+          </button>
+        )}
+      </li>
+    );
+  };
 
   return (
     <div className="stack">
@@ -251,16 +281,9 @@ export function ShoppingListView({
             <section className="card stack stack-sm">
               <div className="row row-between">
                 <strong>
-                  Masz {checkedCount} z {items.length}
+                  Masz {owned.length} z {items.length}
                 </strong>
-                <label className="row small" style={{ cursor: "pointer" }}>
-                  <input
-                    type="checkbox"
-                    checked={hideChecked}
-                    onChange={(event) => setHideChecked(event.target.checked)}
-                  />
-                  Ukryj odhaczone
-                </label>
+                {toBuy.length > 0 && <span className="muted small">Do kupienia: {toBuy.length}</span>}
               </div>
               <div
                 className="progress"
@@ -268,9 +291,9 @@ export function ShoppingListView({
                 aria-label="Postęp zakupów"
                 aria-valuemin={0}
                 aria-valuemax={items.length}
-                aria-valuenow={checkedCount}
+                aria-valuenow={owned.length}
               >
-                <div style={{ width: `${(checkedCount / items.length) * 100}%` }} />
+                <div style={{ width: `${(owned.length / items.length) * 100}%` }} />
               </div>
             </section>
           )}
@@ -296,59 +319,49 @@ export function ShoppingListView({
             </button>
           </form>
 
-          {items.length === 0 ? (
+          {items.length === 0 && (
             <div className="empty">
               <p>Lista jest pusta. Zaplanuj posiłki w kalendarzu albo dopisz coś ręcznie.</p>
             </div>
-          ) : visible.length === 0 ? (
+          )}
+
+          {items.length > 0 && toBuy.length === 0 && (
             <div className="empty">
-              <p>Wszystko odhaczone 🎉</p>
+              <p>Masz już wszystko 🎉</p>
             </div>
-          ) : (
-            [...groups.entries()].map(([category, groupItems]) => (
-              <section key={category} className="shopping-group">
-                <h2>
-                  <span aria-hidden="true">{categoryLook(category).emoji}</span>
-                  {category.charAt(0).toUpperCase() + category.slice(1)}
-                </h2>
+          )}
+
+          {[...groups.entries()].map(([category, groupItems]) => (
+            <section key={category} className="shopping-group">
+              <h2>
+                <span aria-hidden="true">{categoryLook(category).emoji}</span>
+                {category.charAt(0).toUpperCase() + category.slice(1)}
+              </h2>
+              <ul className="shopping-items" style={{ listStyle: "none" }}>
+                {groupItems.map(row)}
+              </ul>
+            </section>
+          ))}
+
+          {owned.length > 0 && (
+            <section className="shopping-group shopping-owned" aria-label="Posiadasz">
+              <h2>
+                <button
+                  type="button"
+                  className="owned-toggle"
+                  aria-expanded={ownedOpen}
+                  onClick={() => setOwnedOpen((open) => !open)}
+                >
+                  <span aria-hidden="true">✅</span> Posiadasz ({owned.length})
+                  <Icon name={ownedOpen ? "chevron-up" : "chevron-down"} size={18} />
+                </button>
+              </h2>
+              {ownedOpen && (
                 <ul className="shopping-items" style={{ listStyle: "none" }}>
-                  {groupItems.map((item) => {
-                    const amount = formatAmounts(item.quantity, item.unit, item.alt_quantity, item.alt_unit);
-                    const details = [amount, item.is_manual ? "dopisane" : item.sources.join(", ")]
-                      .filter(Boolean)
-                      .join(" · ");
-                    return (
-                      <li
-                        key={item.id}
-                        className={item.checked ? "shopping-item is-checked" : "shopping-item"}
-                      >
-                        <label>
-                          <input
-                            type="checkbox"
-                            checked={item.checked}
-                            onChange={() => void toggle(item)}
-                          />
-                          <span className="shopping-text">
-                            <span className="shopping-name">{item.name}</span>
-                            {details && <span className="shopping-sources">{details}</span>}
-                          </span>
-                        </label>
-                        {item.is_manual && (
-                          <button
-                            type="button"
-                            className="icon-btn"
-                            aria-label={`Usuń ${item.name}`}
-                            onClick={() => void removeItem(item)}
-                          >
-                            <Icon name="close" size={16} />
-                          </button>
-                        )}
-                      </li>
-                    );
-                  })}
+                  {owned.map(row)}
                 </ul>
-              </section>
-            ))
+              )}
+            </section>
           )}
         </>
       )}

@@ -2026,3 +2026,26 @@ a.day-name:hover {
   border-radius: 11px;
   font-size: 1.1rem;
 }
+
+/* Things already at home, at the end of the shopping list. */
+.shopping-owned {
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.owned-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.owned-toggle svg {
+  color: var(--muted);
+}
