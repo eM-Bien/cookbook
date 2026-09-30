@@ -86,7 +86,9 @@ export function Planner({
   const [search, setSearch] = useState("");
   const [recipeId, setRecipeId] = useState<string | null>(null);
   const [mealType, setMealType] = useState<MealType>("obiad");
-  const [servings, setServings] = useState(2);
+  // Two people eat here, so every meal starts at two servings, whatever the recipe says.
+  const DEFAULT_SERVINGS = 2;
+  const [servings, setServings] = useState(DEFAULT_SERVINGS);
   const [dialogError, setDialogError] = useState<string | null>(null);
   const [adding, startAdding] = useTransition();
 
@@ -116,6 +118,7 @@ export function Planner({
     setTwoDays(false);
     setSearch("");
     setRecipeId(null);
+    setServings(DEFAULT_SERVINGS);
     setDialogError(null);
     dialog.current?.showModal();
   }
@@ -142,7 +145,7 @@ export function Planner({
         date: picking.date,
         mealType: picking.meal,
         recipeId: recipe.id,
-        servings: recipe.servings,
+        servings: DEFAULT_SERVINGS,
         twoDays: spansTwoDays,
       });
       if (result.ok) picker.current?.close();
@@ -152,7 +155,6 @@ export function Planner({
 
   function chooseRecipe(recipe: RecipeOption) {
     setRecipeId(recipe.id);
-    setServings(recipe.servings);
   }
 
   function submit() {
