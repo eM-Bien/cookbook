@@ -2252,12 +2252,13 @@ a.day-name:hover {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0 16px 32px;
+  padding: 0 0 32px;
 }
 
 .login-stage {
   --dish: min(560px, 92vw);
   position: relative;
+  /* Edge to edge, so a rolling plate is never cut by the page padding. */
   width: 100%;
   /* Only the lower half of a plate shows; it peeks in from above the page. */
   height: calc(var(--dish) * 0.5 + 28px);
@@ -2279,8 +2280,9 @@ a.day-name:hover {
 }
 
 @keyframes roll-dish {
+  /* Parked fully off screen, whatever the screen width. */
   0% {
-    transform: translateX(90vw) rotate(360deg);
+    transform: translateX(calc(50vw + var(--dish))) rotate(360deg);
   }
   11% {
     transform: translateX(0) rotate(0deg);
@@ -2290,14 +2292,14 @@ a.day-name:hover {
   }
   33%,
   100% {
-    transform: translateX(-90vw) rotate(-380deg);
+    transform: translateX(calc(-50vw - var(--dish))) rotate(-380deg);
   }
 }
 
 .login-body {
   width: 100%;
-  max-width: 420px;
-  padding-top: 20px;
+  max-width: 452px;
+  padding: 20px 16px 0;
 }
 
 @media (min-width: 701px) {
