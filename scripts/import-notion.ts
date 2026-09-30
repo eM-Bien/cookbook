@@ -23,6 +23,24 @@ const MEALS: Record<string, MealType> = {
   supper: "kolacja",
 };
 
+// Notion names that read better shorter.
+const INGREDIENT_NAMES: Record<string, string> = {
+  "jajko kurze całe": "Jajko",
+  "cebula czerwona": "Cebula",
+  "borówki": "Borówki amerykańskie",
+  "borówki amerykańskie świeże": "Borówki amerykańskie",
+  "borówki amerykańskie (świeże lub mrożone)": "Borówki amerykańskie",
+  "borówki amerykańskie, świeże lub mrożone": "Borówki amerykańskie",
+  // The household bakes gluten-free: every spelt flour becomes gluten-free flour.
+  "mąka orkiszowa pełnoziarnista": "Mąka bezglutenowa",
+  "mąka orkiszowa biała": "Mąka bezglutenowa",
+  "mąka orkiszowa": "Mąka bezglutenowa",
+  "bezglutenowa mąka do wypieku ciast schar": "Mąka bezglutenowa",
+  "ser mozzarella (kulka)": "Ser mozzarella kulka light",
+  "ser mozzarella kulka": "Ser mozzarella kulka light",
+  "ser twarogowy chudy": "Ser twarogowy półtłusty",
+};
+
 const TAGS: Record<string, string> = {
   pancakes: "placki",
   oatmeal: "owsianki",
@@ -220,7 +238,8 @@ export function parseRecipe(markdown: string, file: string, folder = ""): Parsed
       continue;
     }
 
-    const name = capitalize(parts[0].trim());
+    const rawName = parts[0].trim();
+    const name = INGREDIENT_NAMES[rawName.toLowerCase()] ?? capitalize(rawName);
     ingredients.push({
       name,
       quantity: null,
