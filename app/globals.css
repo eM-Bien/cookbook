@@ -1659,17 +1659,14 @@ body:has(.drawer[open]) {
   }
 }
 
-/* Cut-out dishes (transparent PNG) are shown whole, floating on a soft dark glow. */
+/* Dishes photographed on white are shown whole, on a white ground they blend into. */
 .hero:has(img.is-cutout) {
-  background:
-    radial-gradient(ellipse 60% 55% at 50% 45%, rgb(242 168 29 / 14%), transparent 70%),
-    var(--surface-muted);
+  background: #ffffff;
 }
 
 .hero img.is-cutout {
-  padding: 16px 0 40px;
+  padding: 12px 0 36px;
   object-fit: contain;
-  filter: drop-shadow(0 18px 24px rgb(0 0 0 / 55%));
 }
 
 /* ---------- Calendar views ---------- */
