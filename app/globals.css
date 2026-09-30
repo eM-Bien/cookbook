@@ -2515,3 +2515,9 @@ a.day-name:hover {
     animation: none;
   }
 }
+
+/* Profile: a little air above, and centred. */
+.profile {
+  margin: 0 auto;
+  padding-top: 40px;
+}

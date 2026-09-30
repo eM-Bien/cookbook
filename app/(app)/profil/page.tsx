@@ -25,7 +25,7 @@ export default async function ProfilePage() {
   }));
 
   return (
-    <div className="container-narrow stack" style={{ margin: "0 auto" }}>
+    <div className="container-narrow profile stack">
       <div className="page-header">
         <div>
           <h1>No hejcia, {profile.data?.display_name ?? email}</h1>
