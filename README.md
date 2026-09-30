@@ -1,4 +1,4 @@
-# Książka kucharska
+# nasz Cookbook
 
 Przepisy, plan posiłków na każdy dzień i wspólna lista zakupów dla dwóch osób.
 

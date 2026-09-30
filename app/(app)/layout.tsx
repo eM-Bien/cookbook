@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { connection } from "next/server";
 import { signOut } from "@/app/login/actions";
+import { Brand } from "@/components/brand";
 import { NavLinks } from "@/components/nav-links";
 import { SetupNotice } from "@/components/setup-notice";
 import { requireUser } from "@/lib/auth";
@@ -37,7 +38,7 @@ export default async function AppLayout({
           <h1>Brak dostępu</h1>
           <p className="muted">
             Konto <strong>{email}</strong> nie jest na liście osób, które mogą korzystać z tej
-            książki kucharskiej. Dopisz ten adres do tabeli <code>allowed_emails</code> w Supabase.
+            naszego Cookbooka. Dopisz ten adres do tabeli <code>allowed_emails</code> w Supabase.
           </p>
           <form action={signOut}>
             <button className="btn">Wyloguj się</button>
@@ -54,7 +55,7 @@ export default async function AppLayout({
       <header className="nav">
         <div className="nav-inner">
           <Link href="/kalendarz" className="brand">
-            <span aria-hidden="true">🍳</span> Książka kucharska
+            <span aria-hidden="true">🍳</span> <Brand />
           </Link>
           <NavLinks />
           <Link href="/profil" className="avatar nav-user" title={name} aria-label={`Profil: ${name}`}>

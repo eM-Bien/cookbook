@@ -1,58 +1,30 @@
+/* One look, day and night: near-black ground, charcoal cards, amber accents. */
 :root {
-  --background: #f2f3f5;
-  --surface: #ffffff;
-  --surface-muted: #f4f5f7;
-  --foreground: #1d2226;
-  --muted: #7d848e;
-  --border: #e5e7eb;
-  --primary: #1f2428;
-  --primary-hover: #33393f;
-  --primary-contrast: #ffffff;
-  --heart: #e5484d;
-  --success: #2f8f4e;
-  --success-soft: #e4f4e9;
-  --danger: #c93a3f;
-  --danger-soft: #fdebec;
-  --tone-peach: #fdebd3;
-  --tone-green: #e3f1d9;
-  --tone-blue: #dcecf7;
-  --tone-pink: #f8e1e6;
-  --tone-lilac: #ebe4f7;
-  --tone-sand: #f3ecdf;
+  color-scheme: dark;
+  --background: #0f0f11;
+  --surface: #1a1a1d;
+  --surface-muted: #232327;
+  --foreground: #f4f1ea;
+  --muted: #9a958c;
+  --border: #2a2a2f;
+  --primary: #f2a81d;
+  --primary-hover: #ffbd3f;
+  --primary-contrast: #1a1204;
+  --heart: #ff5e63;
+  --success: #7ad48f;
+  --success-soft: #1a2d1f;
+  --danger: #ff8a8e;
+  --danger-soft: #3a1e20;
+  --tone-peach: #2e2418;
+  --tone-green: #1f2a1d;
+  --tone-blue: #1c2530;
+  --tone-pink: #2e2125;
+  --tone-lilac: #272436;
+  --tone-sand: #2b2620;
   --radius: 20px;
   --radius-sm: 14px;
-  --shadow: 0 1px 2px rgb(20 25 30 / 4%), 0 8px 24px rgb(20 25 30 / 5%);
+  --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 8px 24px rgb(0 0 0 / 35%);
   --nav-height: 64px;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #111315;
-    --surface: #1b1e22;
-    --surface-muted: #24282d;
-    --foreground: #f0f2f4;
-    --muted: #9299a3;
-    --border: #2d3238;
-    --primary: #f0f2f4;
-    --primary-hover: #ffffff;
-    --primary-contrast: #16191c;
-    --heart: #ff6369;
-    --success: #6fcf8d;
-    --success-soft: #1c2e22;
-    --danger: #ff8f93;
-    --danger-soft: #3a1f21;
-    --tone-peach: #3d3022;
-    --tone-green: #26351f;
-    --tone-blue: #1f303d;
-    --tone-pink: #3d242b;
-    --tone-lilac: #2e2740;
-    --tone-sand: #34302a;
-    --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 8px 24px rgb(0 0 0 / 25%);
-  }
-
-  html {
-    color-scheme: dark;
-  }
 }
 
 * {
@@ -82,6 +54,22 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* A quiet glow behind everything: warm amber top-left, cool dusk bottom-right.
+   Fixed to the viewport (a pseudo-element, since background-attachment: fixed
+   is unreliable on phones), so it never scrolls or repeats. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(70% 55% at 0% 0%, rgb(242 168 29 / 32%), transparent 70%),
+    radial-gradient(60% 50% at 100% 100%, rgb(120 90 200 / 34%), transparent 70%),
+    radial-gradient(45% 40% at 85% 10%, rgb(255 120 60 / 12%), transparent 70%),
+    linear-gradient(160deg, #221a14 0%, var(--background) 50%, #0a0a12 100%);
 }
 
 a {
@@ -135,8 +123,8 @@ h3 {
   position: sticky;
   top: 0;
   z-index: 20;
-  background: color-mix(in srgb, var(--background) 85%, transparent);
-  backdrop-filter: blur(12px);
+  background: color-mix(in srgb, var(--background) 45%, transparent);
+  backdrop-filter: blur(14px);
 }
 
 .nav-inner {
@@ -246,7 +234,9 @@ h3 {
 @media (max-width: 700px) {
   /* A backdrop filter would trap the fixed tab bar inside the header. */
   .nav {
-    background: var(--background);
+    /* No blur here: it would turn the nav into the containing block of the
+       fixed bottom bar. A translucent tint over the fixed gradient is enough. */
+    background: color-mix(in srgb, var(--background) 72%, transparent);
     backdrop-filter: none;
   }
 
@@ -1189,7 +1179,7 @@ dialog {
 }
 
 dialog::backdrop {
-  background: rgb(15 18 20 / 50%);
+  background: rgb(0 0 0 / 60%);
 }
 
 .dialog-body {
@@ -1513,7 +1503,7 @@ body:has(.drawer[open]) {
     height: 5px;
     border-radius: 999px;
     background: rgb(255 255 255 / 80%);
-    box-shadow: 0 0 0 1px rgb(0 0 0 / 8%);
+    box-shadow: 0 0 0 1px rgb(0 0 0 / 40%);
     transform: translateX(-50%);
   }
 
@@ -1624,14 +1614,17 @@ body:has(.drawer[open]) {
   }
 }
 
-/* Dishes photographed on white are shown whole, on a white ground they blend into. */
+/* Cut-out dishes (transparent PNG) are shown whole, floating on a soft dark glow. */
 .hero:has(img.is-cutout) {
-  background: #ffffff;
+  background:
+    radial-gradient(ellipse 60% 55% at 50% 45%, rgb(242 168 29 / 14%), transparent 70%),
+    var(--surface-muted);
 }
 
 .hero img.is-cutout {
-  padding: 12px 0 36px;
+  padding: 16px 0 40px;
   object-fit: contain;
+  filter: drop-shadow(0 18px 24px rgb(0 0 0 / 55%));
 }
 
 /* ---------- Calendar views ---------- */
@@ -1857,7 +1850,7 @@ a.day-name:hover {
   .month-meals li {
     width: 8px;
     height: 8px;
-    border: 1px solid rgb(0 0 0 / 12%);
+    border: 1px solid rgb(255 255 255 / 15%);
     border-radius: 999px;
   }
 
@@ -2206,4 +2199,129 @@ a.day-name:hover {
   .weight-form .btn {
     grid-column: 1 / -1;
   }
+}
+
+/* ---------- Login: dishes rolling along the top edge ---------- */
+
+.login {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 16px 32px;
+}
+
+.login-stage {
+  --dish: min(560px, 92vw);
+  position: relative;
+  width: 100%;
+  /* Only the lower half of a plate shows; it peeks in from above the page. */
+  height: calc(var(--dish) * 0.5 + 28px);
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.login-dish {
+  position: absolute;
+  top: calc(var(--dish) * -0.5);
+  left: 50%;
+  width: var(--dish);
+  height: var(--dish);
+  margin-left: calc(var(--dish) * -0.5);
+  filter: drop-shadow(0 22px 26px rgb(0 0 0 / 55%));
+  will-change: transform;
+  /* Three dishes share one 12 s loop, each taking a 4 s turn. */
+  animation: roll-dish 12s ease-in-out calc(var(--n) * 4s) infinite both;
+}
+
+@keyframes roll-dish {
+  0% {
+    transform: translateX(90vw) rotate(360deg);
+  }
+  11% {
+    transform: translateX(0) rotate(0deg);
+  }
+  23% {
+    transform: translateX(0) rotate(-14deg);
+  }
+  33%,
+  100% {
+    transform: translateX(-90vw) rotate(-380deg);
+  }
+}
+
+.login-body {
+  width: 100%;
+  max-width: 420px;
+  padding-top: 20px;
+}
+
+@media (min-width: 701px) {
+  .login-body {
+    padding-top: 48px;
+  }
+}
+
+.login-body h1 {
+  font-size: 2rem;
+  line-height: 1.15;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-dish {
+    animation: none;
+    transform: none;
+  }
+
+  .login-dish:not(:first-child) {
+    display: none;
+  }
+}
+
+/* ---------- Brand: "nasz Cookbook" ---------- */
+
+.brand-name {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.28em;
+  white-space: nowrap;
+}
+
+.brand-fancy {
+  font-family: var(--font-fancy), "Segoe Script", cursive;
+  font-weight: 700;
+  font-size: 1.45em;
+  line-height: 1;
+  color: var(--primary);
+  transform: rotate(-4deg);
+  transform-origin: right bottom;
+}
+
+.login-body {
+  /* Sits just under the plate, leaving the space below empty. */
+  margin: 0 0 auto;
+}
+
+.login-intro {
+  align-items: center;
+  text-align: center;
+}
+
+/* On the login page the name is the hero: "nasz" above a big "Cookbook". */
+.login-body h1 {
+  font-size: clamp(3.4rem, 16vw, 5.6rem);
+  line-height: 1;
+}
+
+.login-body h1 .brand-name {
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+}
+
+.login-body h1 .brand-fancy {
+  font-size: 0.8em;
+  margin-bottom: -0.12em;
+  transform: rotate(-6deg);
+  transform-origin: center;
 }
