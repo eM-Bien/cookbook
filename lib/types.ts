@@ -1,4 +1,4 @@
-export type MealType = "sniadanie" | "obiad" | "kolacja" | "przekaska";
+export type MealType = "sniadanie" | "obiad" | "kolacja";
 
 export const MEAL_TYPES: {
   value: MealType;
@@ -10,7 +10,6 @@ export const MEAL_TYPES: {
   { value: "sniadanie", label: "Śniadanie", plural: "Śniadania", object: "śniadanie" },
   { value: "obiad", label: "Obiad", plural: "Obiady", object: "obiad" },
   { value: "kolacja", label: "Kolacja", plural: "Kolacje", object: "kolację" },
-  { value: "przekaska", label: "Przekąska", plural: "Przekąski", object: "przekąskę" },
 ];
 
 export function isMealType(value: unknown): value is MealType {

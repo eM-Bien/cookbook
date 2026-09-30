@@ -24,7 +24,6 @@ export const MEAL_TONE: Record<MealType, Tone> = {
   sniadanie: "peach",
   obiad: "green",
   kolacja: "lilac",
-  przekaska: "blue",
 };
 
 // First match wins, so the more telling kinds come first.

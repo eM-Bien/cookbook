@@ -21,7 +21,6 @@ const MEALS: Record<string, MealType> = {
   dinner: "obiad",
   lunch: "obiad",
   supper: "kolacja",
-  snack: "przekaska",
 };
 
 const TAGS: Record<string, string> = {
@@ -315,7 +314,7 @@ function readPlan(folder: string): PlannedMeal[] {
 
 /** Gives each meal of a day a different slot, preferring what the recipe is tagged for. */
 function assignMeals(recipes: { title: string; meal_types: MealType[] }[]): MealType[] {
-  const slots: MealType[] = ["sniadanie", "obiad", "kolacja", "przekaska"];
+  const slots: MealType[] = ["sniadanie", "obiad", "kolacja"];
   let best: MealType[] = recipes.map((_, i) => slots[i % slots.length]);
   let bestScore = -1;
 

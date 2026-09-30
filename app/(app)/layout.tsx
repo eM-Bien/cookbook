@@ -55,7 +55,7 @@ export default async function AppLayout({
       <header className="nav">
         <div className="nav-inner">
           <Link href="/kalendarz" className="brand">
-            <span aria-hidden="true">🍳</span> <Brand />
+            <Brand />
           </Link>
           <NavLinks />
           <Link href="/profil" className="avatar nav-user" title={name} aria-label={`Profil: ${name}`}>

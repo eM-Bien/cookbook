@@ -24,7 +24,7 @@
   --radius: 20px;
   --radius-sm: 14px;
   --shadow: 0 1px 2px rgb(0 0 0 / 40%), 0 8px 24px rgb(0 0 0 / 35%);
-  --nav-height: 64px;
+  --nav-height: 96px;
 }
 
 * {
@@ -132,6 +132,7 @@ h3 {
   margin: 0 auto;
   padding: 0 16px;
   height: var(--nav-height);
+  padding-top: 20px;
   display: flex;
   align-items: center;
   gap: 20px;
@@ -141,8 +142,8 @@ h3 {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: 1.5rem;
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -545,11 +546,16 @@ a.chip:hover {
 }
 
 .segmented label {
+  position: relative;
   cursor: pointer;
 }
 
 .segmented input {
   position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
   opacity: 0;
   pointer-events: none;
 }
@@ -1051,7 +1057,8 @@ code {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 10px;
-  align-items: start;
+  /* Every day is as tall as the fullest one; "Dodaj" sits at the bottom. */
+  align-items: stretch;
 }
 
 .day {
@@ -1171,11 +1178,19 @@ dialog {
   margin: auto;
   width: min(520px, calc(100vw - 24px));
   max-height: calc(100dvh - 24px);
+  /* The window itself never scrolls; only the list inside does. */
+  flex-direction: column;
+  overflow: hidden;
   border: 0;
   border-radius: 28px;
   background: var(--surface);
   color: var(--foreground);
   box-shadow: 0 20px 60px rgb(0 0 0 / 30%);
+}
+
+/* Only when open: a plain "display: flex" would also show closed dialogs. */
+dialog[open] {
+  display: flex;
 }
 
 dialog::backdrop {
@@ -1186,6 +1201,7 @@ dialog::backdrop {
   display: flex;
   flex-direction: column;
   gap: 18px;
+  min-height: 0;
   padding: 24px;
 }
 
@@ -1199,9 +1215,12 @@ dialog::backdrop {
 .option-list {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
   gap: 4px;
+  min-height: 96px;
   max-height: 250px;
   overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .option-list label {
@@ -1224,8 +1243,17 @@ dialog::backdrop {
   outline-offset: 2px;
 }
 
+.option-list label {
+  position: relative;
+}
+
+/* Hidden but kept inside its row, so focusing it never scrolls anywhere. */
 .option-list input {
   position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
   opacity: 0;
   pointer-events: none;
 }
@@ -1979,7 +2007,9 @@ a.day-name:hover {
 .pick-list {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
   gap: 2px;
+  min-height: 96px;
   max-height: min(340px, 50dvh);
   margin: 0 -6px;
   overflow-y: auto;
@@ -2324,4 +2354,52 @@ a.day-name:hover {
   margin-bottom: -0.12em;
   transform: rotate(-6deg);
   transform-origin: center;
+}
+
+/* ---------- Calendar: cheerful meal colours ---------- */
+
+:root {
+  --meal-peach: #ff9a3c;
+  --meal-green: #6fd47a;
+  --meal-lilac: #b48cff;
+  --meal-blue: #4fd1d9;
+}
+
+.meal[data-tone],
+.month-meals li[data-tone] {
+  --meal: var(--meal-peach);
+}
+
+.meal[data-tone="green"],
+.month-meals li[data-tone="green"] {
+  --meal: var(--meal-green);
+}
+
+.meal[data-tone="lilac"],
+.month-meals li[data-tone="lilac"] {
+  --meal: var(--meal-lilac);
+}
+
+.meal[data-tone="blue"],
+.month-meals li[data-tone="blue"] {
+  --meal: var(--meal-blue);
+}
+
+/* A glowing tint of the meal colour with a bright stripe on the left. */
+.meal[data-tone] {
+  border-left: 4px solid var(--meal);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--meal) 34%, transparent), transparent 70%),
+    color-mix(in srgb, var(--meal) 14%, var(--surface-muted));
+}
+
+.meal[data-tone] .meal-type {
+  color: var(--meal);
+  font-weight: 700;
+  opacity: 1;
+}
+
+.month-meals li[data-tone] {
+  background: var(--meal);
+  border-color: transparent;
 }

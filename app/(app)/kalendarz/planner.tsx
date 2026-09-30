@@ -332,8 +332,6 @@ export function Planner({
               )}
               {MEAL_TYPES.map((slot) => {
                 const inSlot = meals.filter((entry) => entry.meal_type === slot.value);
-                // Snacks are optional, so an empty slot for them would only add noise.
-                if (inSlot.length === 0 && slot.value === "przekaska" && meals.length > 0) return null;
                 return (
                   <div key={slot.value} className="slot">
                     <h2 className="slot-title">{slot.label}</h2>
