@@ -39,6 +39,10 @@ const INGREDIENT_NAMES: Record<string, string> = {
   "ser mozzarella (kulka)": "Ser mozzarella kulka light",
   "ser mozzarella kulka": "Ser mozzarella kulka light",
   "ser twarogowy chudy": "Ser twarogowy półtłusty",
+  "wanilia (ekstrakt)": "Aromat waniliowy",
+  "wanilia esktrakt": "Aromat waniliowy",
+  "wanilia ekstrakt": "Aromat waniliowy",
+  "ekstrakt waniliowy": "Aromat waniliowy",
 };
 
 const TAGS: Record<string, string> = {
