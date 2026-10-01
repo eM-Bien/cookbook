@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { FilterSelect } from "@/components/filter-select";
 import { HeartButton } from "@/components/heart-button";
 import { Icon } from "@/components/icons";
 import { RecipeThumb } from "@/components/recipe-thumb";
 import { requireUser } from "@/lib/auth";
-import { formatMinutes, servingsLabel } from "@/lib/look";
+import { formatMinutes } from "@/lib/look";
 import { MEAL_TYPES, isMealType, type RecipeSummary } from "@/lib/types";
 
 export const metadata: Metadata = { title: "Przepisy" };
@@ -23,18 +24,31 @@ function first(value: string | string[] | undefined): string {
 
 /** "Madzik" → "madzik": a person's favourites are picked in the address by name. */
 function slug(name: string): string {
-  return searchable(name).replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  return searchable(name)
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
 }
 
 const SHARED = "wspolne";
 
+const TIME_FILTERS = [
+  { key: "10", label: "Do 10 min", fits: (m: number) => m <= 10 },
+  { key: "20", label: "Do 20 min", fits: (m: number) => m <= 20 },
+  { key: "dlugo", label: "Ponad 20 min", fits: (m: number) => m > 20 },
+] as const;
+
 function commentsLabel(count: number): string {
   if (count === 1) return "1 komentarz";
-  const few = count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 12 || count % 100 > 14);
+  const few =
+    count % 10 >= 2 &&
+    count % 10 <= 4 &&
+    (count % 100 < 12 || count % 100 > 14);
   return `${count} ${few ? "komentarze" : "komentarzy"}`;
 }
 
-export default async function RecipesPage({ searchParams }: PageProps<"/przepisy">) {
+export default async function RecipesPage({
+  searchParams,
+}: PageProps<"/przepisy">) {
   const { supabase, userId } = await requireUser();
   const params = await searchParams;
   const query = first(params.q).trim().slice(0, 100);
@@ -42,18 +56,25 @@ export default async function RecipesPage({ searchParams }: PageProps<"/przepisy
   const requestedMeal = first(params.posilek);
   const meal = isMealType(requestedMeal) ? requestedMeal : null;
   const requestedFavorites = first(params.ulubione);
+  // ?czas=10|20|dlugo narrows by total time (up to 10 min, up to 20, over 20).
+  const requestedTime = first(params.czas);
+  const timeFilter = TIME_FILTERS.find((t) => t.key === requestedTime) ?? null;
 
-  const [recipesResult, favoritesResult, profilesResult, commentsResult] = await Promise.all([
-    supabase
-      .from("recipes")
-      .select(
-        "id, title, description, servings, prep_minutes, calories, image_url, tags, meal_types",
-      )
-      .order("title"),
-    supabase.from("favorites").select("user_id, recipe_id"),
-    supabase.from("profiles").select("id, display_name").order("display_name"),
-    supabase.from("comments").select("recipe_id"),
-  ]);
+  const [recipesResult, favoritesResult, profilesResult, commentsResult] =
+    await Promise.all([
+      supabase
+        .from("recipes")
+        .select(
+          "id, title, description, servings, prep_minutes, calories, image_url, tags, meal_types",
+        )
+        .order("title"),
+      supabase.from("favorites").select("user_id, recipe_id"),
+      supabase
+        .from("profiles")
+        .select("id, display_name")
+        .order("display_name"),
+      supabase.from("comments").select("recipe_id"),
+    ]);
   if (recipesResult.error) throw new Error(recipesResult.error.message);
 
   const recipes = (recipesResult.data ?? []) as RecipeSummary[];
@@ -79,23 +100,31 @@ export default async function RecipesPage({ searchParams }: PageProps<"/przepisy
   }
 
   const favorites = new Set(
-    [...likedBy].filter(([, users]) => users.has(userId)).map(([recipeId]) => recipeId),
+    [...likedBy]
+      .filter(([, users]) => users.has(userId))
+      .map(([recipeId]) => recipeId),
   );
   const isShared = (recipeId: string) =>
-    people.length > 1 && people.every((person) => likedBy.get(recipeId)?.has(person.id));
+    people.length > 1 &&
+    people.every((person) => likedBy.get(recipeId)?.has(person.id));
 
   // ?ulubione= names a person ("aro") or "wspolne"; anything else shows all recipes.
   const favoritesOf =
     requestedFavorites === SHARED
       ? SHARED
-      : (people.find((person) => person.slug === requestedFavorites)?.slug ?? null);
+      : (people.find((person) => person.slug === requestedFavorites)?.slug ??
+        null);
   const favoritePerson = people.find((person) => person.slug === favoritesOf);
   const matchesFavorites = (recipeId: string) =>
     !favoritesOf ||
-    (favoritesOf === SHARED ? isShared(recipeId) : likedBy.get(recipeId)?.has(favoritePerson!.id));
+    (favoritesOf === SHARED
+      ? isShared(recipeId)
+      : likedBy.get(recipeId)?.has(favoritePerson!.id));
 
   // Tags are offered for the chosen meal only, so the row stays short and relevant.
-  const inMeal = meal ? recipes.filter((recipe) => recipe.meal_types.includes(meal)) : recipes;
+  const inMeal = meal
+    ? recipes.filter((recipe) => recipe.meal_types.includes(meal))
+    : recipes;
   const usedMeals = MEAL_TYPES.filter((type) =>
     recipes.some((recipe) => recipe.meal_types.includes(type.value)),
   );
@@ -113,11 +142,14 @@ export default async function RecipesPage({ searchParams }: PageProps<"/przepisy
   const shown = inMeal.filter(
     (recipe) =>
       matchesFavorites(recipe.id) &&
+      (!timeFilter ||
+        (recipe.prep_minutes !== null &&
+          timeFilter.fits(recipe.prep_minutes))) &&
       (!tag || recipe.tags.includes(tag)) &&
       (!needle ||
-        searchable(`${recipe.title} ${recipe.description ?? ""} ${recipe.tags.join(" ")}`).includes(
-          needle,
-        )),
+        searchable(
+          `${recipe.title} ${recipe.description ?? ""} ${recipe.tags.join(" ")}`,
+        ).includes(needle)),
   );
 
   // Meal, favourites and tag narrow each other down; each link changes one of them.
@@ -125,15 +157,25 @@ export default async function RecipesPage({ searchParams }: PageProps<"/przepisy
     posilek?: string | null;
     tag?: string | null;
     ulubione?: string | null;
+    czas?: string | null;
   }) => {
     const next = new URLSearchParams();
     const nextMeal = change.posilek === undefined ? meal : change.posilek;
-    const nextTag = change.posilek !== undefined ? null : change.tag === undefined ? tag : change.tag;
-    const nextFavorites = change.ulubione === undefined ? favoritesOf : change.ulubione;
+    const nextTag =
+      change.posilek !== undefined
+        ? null
+        : change.tag === undefined
+          ? tag
+          : change.tag;
+    const nextFavorites =
+      change.ulubione === undefined ? favoritesOf : change.ulubione;
     if (nextMeal) next.set("posilek", nextMeal);
     if (nextTag) next.set("tag", nextTag);
     if (nextFavorites) next.set("ulubione", nextFavorites);
     if (query) next.set("q", query);
+    const nextTime =
+      change.czas === undefined ? (timeFilter?.key ?? null) : change.czas;
+    if (nextTime) next.set("czas", nextTime);
     const text = next.toString();
     return text ? `/przepisy?${text}` : "/przepisy";
   };
@@ -159,34 +201,64 @@ export default async function RecipesPage({ searchParams }: PageProps<"/przepisy
         />
         {meal && <input type="hidden" name="posilek" value={meal} />}
         {tag && <input type="hidden" name="tag" value={tag} />}
-        {favoritesOf && <input type="hidden" name="ulubione" value={favoritesOf} />}
+        {favoritesOf && (
+          <input type="hidden" name="ulubione" value={favoritesOf} />
+        )}
+        {timeFilter && (
+          <input type="hidden" name="czas" value={timeFilter.key} />
+        )}
       </form>
 
-      <nav className="chips" aria-label="Posiłek">
-        <Link
-          href={filterHref({ posilek: null })}
-          className="chip"
-          aria-current={!meal ? "true" : undefined}
-        >
-          Wszystkie
-        </Link>
-        {usedMeals.map((type) => (
+      {/* Meals on the left, time on the right (one row on a wide screen). */}
+      <div className="filter-row">
+        <nav className="chips" aria-label="Posiłek">
           <Link
-            key={type.value}
-            href={filterHref({ posilek: type.value })}
+            href={filterHref({ posilek: null })}
             className="chip"
-            aria-current={meal === type.value ? "true" : undefined}
+            aria-current={!meal ? "true" : undefined}
           >
-            {type.plural}
+            Wszystkie
           </Link>
-        ))}
-      </nav>
+          {usedMeals.map((type) => (
+            <Link
+              key={type.value}
+              href={filterHref({ posilek: type.value })}
+              className="chip"
+              aria-current={meal === type.value ? "true" : undefined}
+            >
+              {type.plural}
+            </Link>
+          ))}
+        </nav>
+
+        {/* The time filter is a dropdown: three chips would crowd the row. */}
+        <div className="time-select">
+          <FilterSelect
+            label="Czas przygotowania"
+            value={timeFilter?.key ?? ""}
+            options={[
+              {
+                value: "",
+                label: "Dowolny czas",
+                href: filterHref({ czas: null }),
+              },
+              ...TIME_FILTERS.map((t) => ({
+                value: t.key,
+                label: t.label,
+                href: filterHref({ czas: t.key }),
+              })),
+            ]}
+          />
+        </div>
+      </div>
 
       <nav className="chips" aria-label="Ulubione">
         {people.map((person) => (
           <Link
             key={person.id}
-            href={filterHref({ ulubione: favoritesOf === person.slug ? null : person.slug })}
+            href={filterHref({
+              ulubione: favoritesOf === person.slug ? null : person.slug,
+            })}
             className="chip"
             aria-current={favoritesOf === person.slug ? "true" : undefined}
           >
@@ -195,7 +267,9 @@ export default async function RecipesPage({ searchParams }: PageProps<"/przepisy
         ))}
         {people.length > 1 && (
           <Link
-            href={filterHref({ ulubione: favoritesOf === SHARED ? null : SHARED })}
+            href={filterHref({
+              ulubione: favoritesOf === SHARED ? null : SHARED,
+            })}
             className="chip"
             aria-current={favoritesOf === SHARED ? "true" : undefined}
           >
@@ -245,40 +319,59 @@ export default async function RecipesPage({ searchParams }: PageProps<"/przepisy
               className="recipe-row enter"
               style={{ "--i": Math.min(index, 14) } as React.CSSProperties}
             >
-              <RecipeThumb title={recipe.title} imageUrl={recipe.image_url} tags={recipe.tags} />
+              <RecipeThumb
+                title={recipe.title}
+                imageUrl={recipe.image_url}
+                tags={recipe.tags}
+              />
               <div className="recipe-row-text">
-                <Link href={`/przepisy/${recipe.id}`} className="recipe-row-title">
+                <Link
+                  href={`/przepisy/${recipe.id}`}
+                  className="recipe-row-title"
+                >
                   {recipe.title}
                 </Link>
                 <div className="meta">
                   {recipe.prep_minutes !== null && (
                     <span>
-                      <Icon name="clock" size={15} /> {formatMinutes(recipe.prep_minutes)}
+                      <Icon name="clock" size={15} />{" "}
+                      {formatMinutes(recipe.prep_minutes)}
                     </span>
                   )}
-                  {recipe.calories !== null && <span>{recipe.calories} kcal</span>}
-                  <span>
-                    {recipe.servings} {servingsLabel(recipe.servings)}
-                  </span>
+                  {recipe.calories !== null && (
+                    <span>{recipe.calories} kcal</span>
+                  )}
                   {(commentCounts.get(recipe.id) ?? 0) > 0 && (
                     <span
                       className="has-comments"
                       title={commentsLabel(commentCounts.get(recipe.id)!)}
                       aria-label={commentsLabel(commentCounts.get(recipe.id)!)}
                     >
-                      <Icon name="comment" size={14} /> {commentCounts.get(recipe.id)}
+                      <Icon name="comment" size={14} />{" "}
+                      {commentCounts.get(recipe.id)}
                     </span>
                   )}
                   {people
-                    .filter((person) => person.id !== userId && likedBy.get(recipe.id)?.has(person.id))
+                    .filter(
+                      (person) =>
+                        person.id !== userId &&
+                        likedBy.get(recipe.id)?.has(person.id),
+                    )
                     .map((person) => (
-                      <span key={person.id} className="liked-by" title={`Ulubione: ${person.name}`}>
+                      <span
+                        key={person.id}
+                        className="liked-by"
+                        title={`Ulubione: ${person.name}`}
+                      >
                         <Icon name="heart" size={13} /> {person.name}
                       </span>
                     ))}
                 </div>
               </div>
-              <HeartButton recipeId={recipe.id} favorite={favorites.has(recipe.id)} />
+              <HeartButton
+                recipeId={recipe.id}
+                favorite={favorites.has(recipe.id)}
+              />
               <span className="recipe-row-chevron" aria-hidden="true">
                 <Icon name="chevron-right" />
               </span>
