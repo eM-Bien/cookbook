@@ -25,30 +25,38 @@ function normalizeName(name: string): string {
   return name.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
+const FRUIT: Record<string, string> = {
+  cytryny: "cytryna",
+  limonki: "limonka",
+  pomarańczy: "pomarańcza",
+};
+
 /**
- * What a recipe line means in the shop. Zest is not sold by itself: a recipe
- * that grates citrus peel needs the whole fruit (one per ~6 g of zest).
+ * What a recipe line means in the shop. Juice and zest are not bought as such:
+ * a recipe that squeezes or grates citrus needs the whole fruit. One fruit
+ * covers ~40 g of juice or ~6 g of zest; within one recipe both share the
+ * same fruit, so the larger count wins (see buildShoppingItems).
  */
-function shopAs(ingredient: Ingredient, scaled: number | null): Ingredient {
+function shopAs(
+  ingredient: Ingredient,
+  scaled: number | null,
+): Ingredient & { whole?: true } {
   const name = normalizeName(ingredient.name);
-  const zest = name.match(
-    /^skórka (?:z |otarta z )?(cytryny|limonki|pomarańczy)$/,
+  const citrus = name.match(
+    /^(sok|skórka|skórka otarta) z (cytryny|limonki|pomarańczy)$/,
   );
-  if (!zest) return { ...ingredient, quantity: scaled };
-  const fruit = {
-    cytryny: "cytryna",
-    limonki: "limonka",
-    pomarańczy: "pomarańcza",
-  }[zest[1]]!;
+  if (!citrus) return { ...ingredient, quantity: scaled };
   const grams = toBase(scaled, ingredient.unit).quantity;
+  const perFruit = citrus[1] === "sok" ? 40 : 6;
   return {
     ...ingredient,
-    name: fruit,
-    quantity: grams === null ? 1 : Math.max(1, Math.ceil(grams / 6)),
+    name: FRUIT[citrus[2]],
+    quantity: grams === null ? 1 : Math.max(1, Math.ceil(grams / perFruit)),
     unit: "szt.",
     alt_quantity: null,
     alt_unit: null,
     category: "warzywa i owoce",
+    whole: true,
   };
 }
 
@@ -81,14 +89,24 @@ export function buildShoppingItems(meals: PlannedMeal[]): ShoppingDraftItem[] {
   const byKey = new Map<string, ShoppingDraftItem>();
 
   for (const meal of meals) {
+    // Lines of one recipe, with juice and zest of the same fruit collapsed to one.
+    const lines: Ingredient[] = [];
     for (const ingredient of meal.ingredients) {
       // Nobody needs to buy tap water.
       if (normalizeName(ingredient.name) === "woda") continue;
-
       const line = shopAs(
         ingredient,
         scaleQuantity(ingredient.quantity, meal.recipeServings, meal.servings),
       );
+      const twin = line.whole
+        ? lines.find((l) => l.name === line.name && l.unit === "szt.")
+        : undefined;
+      if (twin)
+        twin.quantity = Math.max(twin.quantity ?? 0, line.quantity ?? 0);
+      else lines.push(line);
+    }
+
+    for (const line of lines) {
       const scaled = line.quantity;
       const base = toBase(scaled, line.unit);
       const key = itemKey(line.name, scaled, line.unit);

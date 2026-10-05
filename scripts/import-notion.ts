@@ -45,6 +45,8 @@ const INGREDIENT_NAMES: Record<string, string> = {
   "bulion warzywny po rozrobieniu": "Bulion warzywny w słoiczku",
   "bulion warzywny (po rozrobieniu ze słoiczka)": "Bulion warzywny w słoiczku",
   "passata pomidorowa": "Passata pomidorowa pikantna",
+  "ogórek konserwowy": "Ogórek konserwowy pikantny",
+  "łosoś wędzony na zimno": "Łosoś wędzony na zimno w plastrach",
   "yopro jogurt pitny smak wanilia-ciasteczko": "YoPro jogurt pitny smak ciasteczkowy",
   "wanilia (ekstrakt)": "Aromat waniliowy",
   "wanilia esktrakt": "Aromat waniliowy",

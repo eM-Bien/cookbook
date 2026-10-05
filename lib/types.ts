@@ -22,6 +22,8 @@ export const CATEGORIES = [
   "mięso i ryby",
   "pieczywo",
   "produkty suche",
+  "słoiki i puszki",
+  "produkty gotowe",
   "przyprawy",
   "mrożonki",
   "napoje",

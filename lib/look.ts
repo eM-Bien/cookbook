@@ -10,6 +10,8 @@ const CATEGORY_LOOK: Record<string, { emoji: string; tone: Tone }> = {
   "mięso i ryby": { emoji: "🥩", tone: "pink" },
   pieczywo: { emoji: "🥖", tone: "peach" },
   "produkty suche": { emoji: "🌾", tone: "sand" },
+  "słoiki i puszki": { emoji: "🫙", tone: "peach" },
+  "produkty gotowe": { emoji: "🥫", tone: "lilac" },
   przyprawy: { emoji: "🧂", tone: "lilac" },
   mrożonki: { emoji: "🧊", tone: "blue" },
   napoje: { emoji: "🥤", tone: "peach" },
