@@ -46,6 +46,15 @@ export function ShoppingListView({
   const [to, setTo] = useState(suggestedTo);
   const [formOpen, setFormOpen] = useState(list === null || rangeRequested);
   const [ownedOpen, setOwnedOpen] = useState(true);
+  // A freshly ticked item lingers in its section for a moment (ticked, struck
+  // through) before it slides down to "Posiadasz", so the tick can be seen.
+  const SETTLE_MS = 900;
+  const [settling, setSettling] = useState<Set<string>>(() => new Set());
+  const settleTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
+  useEffect(() => {
+    const timers = settleTimers.current;
+    return () => timers.forEach((timer) => clearTimeout(timer));
+  }, []);
   const [newItem, setNewItem] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -95,6 +104,30 @@ export function ShoppingListView({
     const checked = !item.checked;
     setError(null);
     setItems((current) => current.map((i) => (i.id === item.id ? { ...i, checked } : i)));
+    const timers = settleTimers.current;
+    clearTimeout(timers.get(item.id));
+    if (checked) {
+      setSettling((current) => new Set(current).add(item.id));
+      timers.set(
+        item.id,
+        setTimeout(() => {
+          timers.delete(item.id);
+          setSettling((current) => {
+            const next = new Set(current);
+            next.delete(item.id);
+            return next;
+          });
+        }, SETTLE_MS),
+      );
+    } else {
+      timers.delete(item.id);
+      setSettling((current) => {
+        if (!current.has(item.id)) return current;
+        const next = new Set(current);
+        next.delete(item.id);
+        return next;
+      });
+    }
     const { error: saveError } = await createClient()
       .from("shopping_items")
       .update({ checked })
@@ -165,8 +198,9 @@ export function ShoppingListView({
   // What is still to buy is grouped by shop section; what is already at home
   // moves to one list at the end.
   const sorted = [...items].sort(compareItems);
-  const toBuy = sorted.filter((item) => !item.checked);
-  const owned = sorted.filter((item) => item.checked);
+  // Settling items still count as "to buy" for placement, so they stay put for now.
+  const toBuy = sorted.filter((item) => !item.checked || settling.has(item.id));
+  const owned = sorted.filter((item) => item.checked && !settling.has(item.id));
   const groups = new Map<string, ShoppingItem[]>();
   for (const item of toBuy) {
     groups.set(item.category, [...(groups.get(item.category) ?? []), item]);
